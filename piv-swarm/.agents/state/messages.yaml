@@ -1,0 +1,152 @@
+# Message Log
+# All agent communication stored here
+#
+# Today: Messages logged for debugging and history
+# Future: Messages sent to real agents via swarm mode
+
+version: "1.0.0"
+
+# =============================================================================
+# MESSAGE CONFIGURATION
+# =============================================================================
+
+config:
+  # Retention settings
+  max_messages: 1000            # Keep last N messages
+  archive_after: 500            # Archive to file after N messages
+
+  # Future swarm settings
+  delivery_timeout: 30          # Seconds to wait for acknowledgment
+  retry_count: 3                # Retries before marking failed
+
+# =============================================================================
+# MESSAGE LOG
+# =============================================================================
+
+messages: []
+
+# Example messages (uncomment to see format):
+#
+# - id: "msg-000001"
+#   timestamp: "2026-01-26T10:00:00Z"
+#   from: "orchestrator"
+#   to: "all"
+#   type: "session_start"
+#   content: "Starting session for feature: user-authentication"
+#   task_id: null
+#   metadata:
+#     feature: "user-authentication"
+#     session_id: "session-001"
+#   acknowledged: true
+#
+# - id: "msg-000002"
+#   timestamp: "2026-01-26T10:00:05Z"
+#   from: "orchestrator"
+#   to: "main"
+#   type: "task_assignment"
+#   content: "Please complete task-001: Implement login endpoint"
+#   task_id: "task-001"
+#   metadata:
+#     priority: "high"
+#     estimated_tokens: 15000
+#   acknowledged: true
+#
+# - id: "msg-000003"
+#   timestamp: "2026-01-26T10:00:10Z"
+#   from: "main"
+#   to: "orchestrator"
+#   type: "task_started"
+#   content: "Starting work on task-001"
+#   task_id: "task-001"
+#   metadata: null
+#   acknowledged: true
+#
+# - id: "msg-000004"
+#   timestamp: "2026-01-26T10:08:00Z"
+#   from: "main"
+#   to: "orchestrator"
+#   type: "question"
+#   content: |
+#     Task-001 requires JWT generation. I see two options:
+#     1. Use existing jwt_encode() in src/core/security.py
+#     2. Create new function specific to auth
+#     Which approach should I take?
+#   task_id: "task-001"
+#   metadata:
+#     options:
+#       - "Use existing jwt_encode()"
+#       - "Create new auth-specific function"
+#   acknowledged: true
+#
+# - id: "msg-000005"
+#   timestamp: "2026-01-26T10:08:30Z"
+#   from: "orchestrator"
+#   to: "main"
+#   type: "answer"
+#   content: |
+#     Use the existing jwt_encode() function. It already handles
+#     our token format and expiration. No need to duplicate.
+#   task_id: "task-001"
+#   metadata:
+#     in_response_to: "msg-000004"
+#     decision: "Use existing jwt_encode()"
+#   acknowledged: true
+#
+# - id: "msg-000006"
+#   timestamp: "2026-01-26T10:15:30Z"
+#   from: "main"
+#   to: "orchestrator"
+#   type: "task_completed"
+#   content: "Completed task-001. All tests passing."
+#   task_id: "task-001"
+#   metadata:
+#     tokens_used: 12500
+#     files_modified:
+#       - "src/api/auth/login.py"
+#       - "src/api/auth/schemas.py"
+#       - "tests/unit/test_login.py"
+#     verification_output: "5 passed in 0.42s"
+#     commit_sha: "abc1234"
+#   acknowledged: true
+
+# =============================================================================
+# MESSAGE STATISTICS
+# =============================================================================
+
+stats:
+  total_messages: 0
+  by_type:
+    session_start: 0
+    session_pause: 0
+    session_resume: 0
+    task_assignment: 0
+    task_started: 0
+    task_completed: 0
+    task_failed: 0
+    task_blocked: 0
+    question: 0
+    answer: 0
+    status_update: 0
+    checkpoint: 0
+    alert: 0
+
+  by_agent:
+    orchestrator:
+      sent: 0
+      received: 0
+    main:
+      sent: 0
+      received: 0
+
+# =============================================================================
+# ARCHIVED MESSAGES
+# =============================================================================
+
+# When message count exceeds max_messages, older messages archived here
+archived:
+  files: []
+  # Example:
+  # - path: ".agents/state/messages-archive-001.yaml"
+  #   from_id: "msg-000001"
+  #   to_id: "msg-000500"
+  #   created_at: "2026-01-26T12:00:00Z"

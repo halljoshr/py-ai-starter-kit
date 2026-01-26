@@ -1,0 +1,81 @@
+# Example Task File
+# This shows a complete task with all fields populated.
+# Copy this as a template when creating new tasks.
+
+id: "task-001"
+name: "Create User model"
+status: completed           # pending → in_progress → completed
+owner: "main"               # Agent that owns/completed this task
+phase: "implementation"
+priority: "high"            # critical | high | medium | low
+
+# Files this task creates or modifies
+files:
+  - "src/models/user.py"
+  - "tests/unit/test_user_model.py"
+
+# Detailed description of what to do
+action: |
+  Create User Pydantic model with the following fields:
+
+  Required fields:
+  - id: UUID (auto-generated with uuid4)
+  - email: EmailStr (unique, validated format)
+  - hashed_password: str (never store plain text)
+  - created_at: datetime (auto-set on creation)
+  - is_active: bool (default True)
+
+  Optional fields:
+  - updated_at: datetime (auto-set on update)
+  - full_name: str | None
+
+  Include validators:
+  - Email must be valid format (use EmailStr)
+  - Password must be hashed (check for bcrypt prefix)
+
+  Follow patterns from:
+  - src/models/base.py (BaseModel structure)
+  - src/core/security.py (password hashing reference)
+
+  Tests to write:
+  - test_user_creation_with_valid_data
+  - test_user_email_validation
+  - test_user_password_not_plain_text
+  - test_user_default_values
+
+# Command to verify task completion
+verify: "uv run pytest tests/unit/test_user_model.py -v"
+
+# Human-readable success criteria
+done: "User model validates email format, stores hashed passwords, and has auto-generated timestamps"
+
+# Dependency tracking
+blocked_by: []              # No dependencies
+blocks:                     # These tasks wait on this one
+  - "task-002"
+  - "task-003"
+
+# Timestamps
+created_at: "2026-01-26T10:00:00Z"
+started_at: "2026-01-26T10:05:00Z"
+completed_at: "2026-01-26T10:25:00Z"
+
+# Token tracking
+estimated_tokens: 10000
+actual_tokens: 12500        # Filled after completion
+
+# Additional context
+notes: |
+  Completed successfully on first attempt.
+  Used existing password hashing from security.py.
+  Added extra test for edge case with empty email.
+
+# Verification output (captured after running verify command)
+verification_output: |
+  tests/unit/test_user_model.py::test_user_creation_with_valid_data PASSED
+  tests/unit/test_user_model.py::test_user_email_validation PASSED
+  tests/unit/test_user_model.py::test_user_password_not_plain_text PASSED
+  tests/unit/test_user_model.py::test_user_default_values PASSED
+  tests/unit/test_user_model.py::test_user_empty_email_rejected PASSED
+
+  5 passed in 0.42s

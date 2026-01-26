@@ -1,0 +1,160 @@
+# Agent Registry
+# Tracks all agents in the system
+#
+# Today: Single agent (main)
+# Future: Multiple agents via swarm mode
+
+version: "1.0.0"
+
+# =============================================================================
+# AGENT DEFINITIONS
+# =============================================================================
+
+agents:
+  # -----------------------------------------------------------------------------
+  # ORCHESTRATOR (Always present)
+  # -----------------------------------------------------------------------------
+  - id: main
+    role: orchestrator
+    status: idle                # idle | active | paused
+    capabilities:
+      - planning
+      - coordination
+      - review
+      - execution              # In single-agent mode, does everything
+    current_task: null
+    tasks_completed: 0
+    tokens_used: 0
+    created_at: null
+    last_active: null
+
+  # -----------------------------------------------------------------------------
+  # FUTURE: RESEARCHER AGENTS
+  # -----------------------------------------------------------------------------
+  # Uncomment when swarm mode available:
+  #
+  # - id: researcher-1
+  #   role: researcher
+  #   status: idle
+  #   capabilities:
+  #     - codebase_analysis
+  #     - api_research
+  #     - pattern_discovery
+  #   specialization: "stack"    # stack | features | architecture | pitfalls
+  #   current_task: null
+  #   tasks_completed: 0
+  #   tokens_used: 0
+  #
+  # - id: researcher-2
+  #   role: researcher
+  #   status: idle
+  #   capabilities:
+  #     - codebase_analysis
+  #     - api_research
+  #     - pattern_discovery
+  #   specialization: "architecture"
+  #   current_task: null
+
+  # -----------------------------------------------------------------------------
+  # FUTURE: EXECUTOR AGENTS
+  # -----------------------------------------------------------------------------
+  # - id: executor-1
+  #   role: executor
+  #   status: idle
+  #   capabilities:
+  #     - code_writing
+  #     - test_writing
+  #     - file_modification
+  #   current_task: null
+  #   tasks_completed: 0
+  #   tokens_used: 0
+  #
+  # - id: executor-2
+  #   role: executor
+  #   status: idle
+  #   capabilities:
+  #     - code_writing
+  #     - test_writing
+  #     - file_modification
+  #   current_task: null
+
+  # -----------------------------------------------------------------------------
+  # FUTURE: REVIEWER AGENT
+  # -----------------------------------------------------------------------------
+  # - id: reviewer-1
+  #   role: reviewer
+  #   status: idle
+  #   capabilities:
+  #     - code_review
+  #     - security_analysis
+  #     - performance_review
+  #   current_task: null
+
+  # -----------------------------------------------------------------------------
+  # FUTURE: DEBUGGER AGENT
+  # -----------------------------------------------------------------------------
+  # - id: debugger-1
+  #   role: debugger
+  #   status: idle
+  #   capabilities:
+  #     - error_analysis
+  #     - fix_generation
+  #     - root_cause_analysis
+  #   current_task: null
+
+# =============================================================================
+# ROLE DEFINITIONS
+# =============================================================================
+
+roles:
+  orchestrator:
+    description: "Coordinates workflow, assigns tasks, monitors progress"
+    can_spawn: true             # Can spawn other agents (in swarm mode)
+    max_instances: 1
+
+  researcher:
+    description: "Investigates codebase, APIs, and best practices"
+    can_spawn: false
+    max_instances: 4            # Up to 4 parallel researchers
+    specializations:
+      - stack                   # Technology stack research
+      - features                # Similar feature patterns
+      - architecture            # System architecture
+      - pitfalls                # Common mistakes to avoid
+
+  executor:
+    description: "Implements code changes and writes tests"
+    can_spawn: false
+    max_instances: 3            # Up to 3 parallel executors
+
+  reviewer:
+    description: "Reviews code for quality, security, and standards"
+    can_spawn: false
+    max_instances: 1
+
+  debugger:
+    description: "Diagnoses failures and generates fixes"
+    can_spawn: false
+    max_instances: 1
+
+# =============================================================================
+# AGENT CONFIGURATION
+# =============================================================================
+
+config:
+  # Single-agent mode (current)
+  mode: single                  # single | swarm
+
+  # Swarm configuration (for future)
+  swarm:
+    max_agents: 8               # Maximum concurrent agents
+    auto_scale: true            # Automatically spawn agents as needed
+    min_executors: 1            # Minimum executor agents
+    max_executors: 3            # Maximum executor agents
+
+  # Token budgets per agent (in swarm mode)
+  token_budgets:
+    researcher: 30000           # 30K per researcher
+    executor: 50000             # 50K per executor
+    reviewer: 20000             # 20K for review
+    debugger: 30000             # 30K for debugging

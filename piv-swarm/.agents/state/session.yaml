@@ -1,0 +1,142 @@
+# Session State
+# Machine-readable session data
+# Human-readable version: STATE.md
+
+version: "1.0.0"
+
+# =============================================================================
+# SESSION INFO
+# =============================================================================
+
+session:
+  id: null                      # Unique session ID (generated on start)
+  feature: null                 # Feature being worked on
+  phase: null                   # Current phase (prime, discuss, plan, execute, validate)
+  status: idle                  # idle | active | paused | completed
+
+  # Timestamps
+  created_at: null
+  started_at: null
+  paused_at: null
+  resumed_at: null
+  completed_at: null
+
+# =============================================================================
+# TOKEN TRACKING
+# =============================================================================
+
+tokens:
+  budget: 200000                # Total token budget
+  used: 0                       # Tokens used this session
+  warning_threshold: 150000     # 75% - suggest checkpoint
+  critical_threshold: 175000    # 88% - force checkpoint
+
+  # Per-phase tracking
+  by_phase:
+    prime: 0
+    discuss: 0
+    plan: 0
+    execute: 0
+    validate: 0
+
+# =============================================================================
+# TASK TRACKING
+# =============================================================================
+
+tasks:
+  total: 0
+  pending: 0
+  in_progress: 0
+  completed: 0
+  failed: 0
+  blocked: 0
+
+  # Current focus
+  current_task: null            # Task ID currently being worked on
+  next_task: null               # Next task in queue
+
+  # Task IDs by status (for quick lookup)
+  ids:
+    pending: []
+    in_progress: []
+    completed: []
+    failed: []
+    blocked: []
+
+# =============================================================================
+# AGENT TRACKING
+# =============================================================================
+
+agents:
+  active: 1                     # Number of active agents
+  idle: 0                       # Number of idle agents
+
+  # Quick reference to agent assignments
+  assignments:
+    main: null                  # Task ID assigned to main agent
+    # Future swarm agents:
+    # researcher-1: null
+    # executor-1: null
+
+# =============================================================================
+# CHECKPOINTS
+# =============================================================================
+
+checkpoints:
+  count: 0                      # Number of checkpoints this session
+  last_checkpoint: null         # Timestamp of last checkpoint
+
+  history: []
+  # Example checkpoint:
+  # - timestamp: "2026-01-26T10:30:00Z"
+  #   tokens_used: 50000
+  #   tasks_completed: ["task-001", "task-002"]
+  #   commit_sha: "abc1234"
+  #   notes: "Checkpoint at 50K tokens"
+
+# =============================================================================
+# GIT STATE
+# =============================================================================
+
+git:
+  branch: null                  # Current branch
+  initial_commit: null          # Commit SHA when session started
+  last_commit: null             # Most recent commit SHA
+  commits_this_session: 0       # Number of commits made
+
+# =============================================================================
+# DISCUSSION DECISIONS
+# =============================================================================
+
+# Captured during /piv:discuss phase
+decisions: []
+# Example:
+# - question: "Which authentication method?"
+#   answer: "JWT with refresh tokens"
+#   timestamp: "2026-01-26T09:30:00Z"
+
+# =============================================================================
+# BLOCKERS
+# =============================================================================
+
+blockers: []
+# Example:
+# - id: "blocker-001"
+#   task_id: "task-003"
+#   description: "Need API key for external service"
+#   created_at: "2026-01-26T10:15:00Z"
+#   resolved_at: null
+
+# =============================================================================
+# SESSION HISTORY
+# =============================================================================
+
+history:
+  events: []
+  # Example events:
+  # - timestamp: "2026-01-26T10:00:00Z"
+  #   type: "session_start"
+  #   details: "Started session for user-authentication"
+  # - timestamp: "2026-01-26T10:05:00Z"
+  #   type: "task_completed"
+  #   details: "Completed task-001"

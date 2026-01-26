@@ -1,0 +1,235 @@
+# Task Schema
+# Version: 1.0.0
+#
+# Tasks are the atomic unit of work in PIV-Swarm.
+# Each task is a separate file in .agents/tasks/{task-id}.yaml
+#
+# This enables:
+# - Parallel agent access without conflicts
+# - Clear ownership tracking
+# - Independent verification
+# - Easy status updates
+
+# =============================================================================
+# SCHEMA DEFINITION
+# =============================================================================
+
+schema:
+  version: "1.0.0"
+  name: "PIV-Swarm Task"
+
+# =============================================================================
+# REQUIRED FIELDS
+# =============================================================================
+
+required:
+  - id          # Unique identifier (e.g., "task-001")
+  - name        # Human-readable task name
+  - status      # Current status
+  - action      # What to do
+  - verify      # How to verify completion
+  - done        # Success criteria
+
+# =============================================================================
+# FIELD DEFINITIONS
+# =============================================================================
+
+fields:
+  id:
+    type: string
+    pattern: "^task-[0-9]{3}$"
+    description: "Unique task identifier"
+    example: "task-001"
+
+  name:
+    type: string
+    max_length: 100
+    description: "Short, descriptive task name"
+    example: "Implement login endpoint"
+
+  status:
+    type: enum
+    values:
+      - pending      # Not started
+      - assigned     # Assigned to agent but not started
+      - in_progress  # Currently being worked on
+      - blocked      # Waiting on dependency or issue
+      - review       # Complete, awaiting review
+      - completed    # Done and verified
+      - failed       # Failed verification
+    default: pending
+    description: "Current task status"
+
+  owner:
+    type: string
+    nullable: true
+    description: "Agent ID that owns this task"
+    example: "executor-1"
+    notes: "null means unassigned"
+
+  phase:
+    type: string
+    description: "Which project phase this task belongs to"
+    example: "implementation"
+
+  priority:
+    type: enum
+    values:
+      - critical  # Must complete first
+      - high      # Important
+      - medium    # Normal priority
+      - low       # Can wait
+    default: medium
+
+  files:
+    type: array
+    items: string
+    description: "Files this task will create or modify"
+    example:
+      - "src/api/auth/login.py"
+      - "tests/unit/test_login.py"
+
+  action:
+    type: string
+    multiline: true
+    description: "Detailed description of what to do"
+    example: |
+      Create POST /auth/login endpoint that:
+      1. Accepts email and password in request body
+      2. Validates credentials against user database
+      3. Returns JWT token on success
+      4. Returns 401 on invalid credentials
+
+  verify:
+    type: string
+    description: "Command to run to verify completion"
+    example: "uv run pytest tests/unit/test_login.py -v"
+
+  done:
+    type: string
+    description: "Human-readable success criteria"
+    example: "POST /auth/login returns valid JWT token on valid credentials"
+
+  blocked_by:
+    type: array
+    items: string
+    description: "Task IDs that must complete before this one"
+    example:
+      - "task-001"
+      - "task-002"
+
+  blocks:
+    type: array
+    items: string
+    description: "Task IDs that are waiting on this one"
+    example:
+      - "task-004"
+
+  created_at:
+    type: datetime
+    description: "When task was created"
+    format: "ISO 8601"
+
+  started_at:
+    type: datetime
+    nullable: true
+    description: "When task was started"
+
+  completed_at:
+    type: datetime
+    nullable: true
+    description: "When task was completed"
+
+  estimated_tokens:
+    type: integer
+    description: "Estimated tokens to complete this task"
+    example: 15000
+
+  actual_tokens:
+    type: integer
+    nullable: true
+    description: "Actual tokens used (filled after completion)"
+
+  notes:
+    type: string
+    multiline: true
+    nullable: true
+    description: "Additional notes, blockers, or context"
+
+  verification_output:
+    type: string
+    multiline: true
+    nullable: true
+    description: "Output from verify command (filled after completion)"
+
+# =============================================================================
+# EXAMPLE TASK
+# =============================================================================
+
+example:
+  id: "task-001"
+  name: "Implement login endpoint"
+  status: "pending"
+  owner: null
+  phase: "implementation"
+  priority: "high"
+  files:
+    - "src/api/auth/login.py"
+    - "src/api/auth/schemas.py"
+    - "tests/unit/test_login.py"
+  action: |
+    Create POST /auth/login endpoint that:
+    1. Accepts LoginRequest schema (email, password)
+    2. Validates credentials against user database
+    3. Generates JWT token with user_id claim
+    4. Returns LoginResponse schema (token, expires_at)
+    5. Returns 401 with error message on invalid credentials
+
+    Follow patterns from:
+    - src/api/users/routes.py (route structure)
+    - src/core/security.py (JWT generation)
+  verify: "uv run pytest tests/unit/test_login.py -v"
+  done: "POST /auth/login returns valid JWT on valid credentials, 401 on invalid"
+  blocked_by: []
+  blocks:
+    - "task-003"
+  created_at: "2026-01-26T10:00:00Z"
+  started_at: null
+  completed_at: null
+  estimated_tokens: 15000
+  actual_tokens: null
+  notes: null
+  verification_output: null
+
+# =============================================================================
+# STATUS TRANSITIONS
+# =============================================================================
+
+transitions:
+  pending:
+    - assigned     # When agent claims task
+    - in_progress  # When work begins (skip assigned)
+
+  assigned:
+    - in_progress  # When work begins
+    - pending      # If agent releases task
+
+  in_progress:
+    - blocked      # When dependency or issue found
+    - review       # When work complete, needs review
+    - completed    # When work complete and verified (skip review)
+    - failed       # When verification fails
+
+  blocked:
+    - in_progress  # When blocker resolved
+
+  review:
+    - completed    # When review passes
+    - in_progress  # When review finds issues
+
+  completed:
+    # Terminal state (but can reopen if needed)
+    - in_progress  # If reopened
+
+  failed:
+    - in_progress  # When retrying

@@ -1,0 +1,243 @@
+# Message Schema
+# Version: 1.0.0
+#
+# Messages enable communication between agents.
+# Today: Messages are logged for debugging and history
+# Future: Messages sent to real agents via swarm mode
+#
+# All messages stored in .agents/state/messages.yaml
+
+# =============================================================================
+# SCHEMA DEFINITION
+# =============================================================================
+
+schema:
+  version: "1.0.0"
+  name: "PIV-Swarm Message"
+
+# =============================================================================
+# REQUIRED FIELDS
+# =============================================================================
+
+required:
+  - id          # Unique identifier
+  - timestamp   # When message was created
+  - from        # Sender agent ID
+  - to          # Recipient agent ID or "all"
+  - type        # Message type
+  - content     # Message content
+
+# =============================================================================
+# FIELD DEFINITIONS
+# =============================================================================
+
+fields:
+  id:
+    type: string
+    pattern: "^msg-[0-9]{6}$"
+    description: "Unique message identifier"
+    example: "msg-000001"
+
+  timestamp:
+    type: datetime
+    format: "ISO 8601"
+    description: "When message was created"
+
+  from:
+    type: string
+    description: "Sender agent ID"
+    examples:
+      - "orchestrator"
+      - "researcher-1"
+      - "executor-2"
+
+  to:
+    type: string
+    description: "Recipient agent ID or 'all' for broadcast"
+    examples:
+      - "executor-1"
+      - "all"
+      - "orchestrator"
+
+  type:
+    type: enum
+    values:
+      # Task-related
+      - task_assignment    # Assigning task to agent
+      - task_started       # Agent started working on task
+      - task_completed     # Agent completed task
+      - task_failed        # Agent failed task
+      - task_blocked       # Agent reporting blocker
+
+      # Communication
+      - question           # Agent asking question
+      - answer             # Response to question
+      - status_update      # General status update
+      - alert              # Important notification
+
+      # Coordination
+      - agent_ready        # Agent ready for work
+      - agent_idle         # Agent has no tasks
+      - agent_stopping     # Agent shutting down
+
+      # System
+      - session_start      # Session started
+      - session_pause      # Session paused
+      - session_resume     # Session resumed
+      - checkpoint         # Progress checkpoint
+    description: "Type of message"
+
+  content:
+    type: string
+    multiline: true
+    description: "Message content"
+
+  task_id:
+    type: string
+    nullable: true
+    description: "Related task ID (if applicable)"
+
+  metadata:
+    type: object
+    nullable: true
+    description: "Additional structured data"
+    example:
+      tokens_used: 5000
+      files_modified:
+        - "src/api/auth/login.py"
+
+  acknowledged:
+    type: boolean
+    default: false
+    description: "Whether recipient acknowledged message"
+    notes: "For future swarm mode"
+
+# =============================================================================
+# MESSAGE TYPES DETAIL
+# =============================================================================
+
+message_types:
+  task_assignment:
+    description: "Orchestrator assigning task to agent"
+    required_fields:
+      - task_id
+    example:
+      from: "orchestrator"
+      to: "executor-1"
+      type: "task_assignment"
+      content: "Please complete task-001: Implement login endpoint"
+      task_id: "task-001"
+
+  task_completed:
+    description: "Agent reporting task completion"
+    required_fields:
+      - task_id
+    example:
+      from: "executor-1"
+      to: "orchestrator"
+      type: "task_completed"
+      content: "Completed task-001. All tests passing."
+      task_id: "task-001"
+      metadata:
+        tokens_used: 12500
+        files_modified:
+          - "src/api/auth/login.py"
+          - "tests/unit/test_login.py"
+        verification_output: "5 passed in 0.42s"
+
+  question:
+    description: "Agent asking for clarification"
+    example:
+      from: "executor-1"
+      to: "orchestrator"
+      type: "question"
+      content: |
+        Task-001 specifies JWT token, but I see two JWT libraries
+        in the codebase: PyJWT and python-jose. Which should I use?
+      task_id: "task-001"
+
+  answer:
+    description: "Response to agent question"
+    example:
+      from: "orchestrator"
+      to: "executor-1"
+      type: "answer"
+      content: |
+        Use PyJWT - it's already imported in src/core/security.py.
+        python-jose is a legacy dependency we're removing.
+      task_id: "task-001"
+      metadata:
+        in_response_to: "msg-000045"
+
+  task_blocked:
+    description: "Agent reporting blocker"
+    required_fields:
+      - task_id
+    example:
+      from: "executor-1"
+      to: "orchestrator"
+      type: "task_blocked"
+      content: |
+        Blocked on task-001: Need task-002 (database schema)
+        to be completed first. User table doesn't exist yet.
+      task_id: "task-001"
+      metadata:
+        blocked_by: "task-002"
+
+  checkpoint:
+    description: "Progress checkpoint for session persistence"
+    example:
+      from: "orchestrator"
+      to: "all"
+      type: "checkpoint"
+      content: |
+        Checkpoint at 50K tokens.
+        Completed: task-001, task-002
+        In progress: task-003
+        Remaining: task-004, task-005
+      metadata:
+        tokens_used: 50000
+        tasks_completed: ["task-001", "task-002"]
+        tasks_in_progress: ["task-003"]
+        tasks_remaining: ["task-004", "task-005"]
+
+# =============================================================================
+# EXAMPLE MESSAGES FILE
+# =============================================================================
+
+example_file:
+  # .agents/state/messages.yaml
+  messages:
+    - id: "msg-000001"
+      timestamp: "2026-01-26T10:00:00Z"
+      from: "orchestrator"
+      to: "all"
+      type: "session_start"
+      content: "Starting session for feature: user-authentication"
+
+    - id: "msg-000002"
+      timestamp: "2026-01-26T10:00:05Z"
+      from: "orchestrator"
+      to: "main"
+      type: "task_assignment"
+      content: "Assigned task-001: Implement login endpoint"
+      task_id: "task-001"
+
+    - id: "msg-000003"
+      timestamp: "2026-01-26T10:00:10Z"
+      from: "main"
+      to: "orchestrator"
+      type: "task_started"
+      content: "Starting work on task-001"
+      task_id: "task-001"
+
+    - id: "msg-000004"
+      timestamp: "2026-01-26T10:15:30Z"
+      from: "main"
+      to: "orchestrator"
+      type: "task_completed"
+      content: "Completed task-001. All tests passing."
+      task_id: "task-001"
+      metadata:
+        tokens_used: 12500
+        verification_output: "5 passed in 0.42s"
