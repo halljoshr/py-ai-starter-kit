@@ -1,0 +1,91 @@
+# Task File Schema
+# Used by /plan to generate task files from XML spec
+# Used by /execute to know what to implement
+
+id: string  # task-001, task-002, etc.
+name: string  # Human-readable task name
+status: enum  # pending | in_progress | completed | blocked | failed
+owner: string | null  # Agent ID or null if unassigned
+phase: enum  # setup | models | database | services | api | tests | docs
+priority: enum  # high | medium | low
+
+duration_estimate: string  # "1 session (~25K tokens)"
+tdd: boolean  # true if test-driven development
+
+files:
+  create:  # List of new files to create
+    - string
+  modify:  # List of existing files to modify
+    - string
+
+models:  # Optional: List of model names if relevant
+  - string
+
+endpoints:  # Optional: List of API endpoints if relevant
+  - string
+
+actions:  # Step-by-step what to do
+  - string  # Action 1
+  - string  # Action 2
+
+patterns:  # Reference docs to follow
+  - string  # .claude/reference/pattern-name.md
+
+validation:
+  commands:  # Bash commands to run for verification
+    - string  # uv run pytest tests/unit/models/ -v
+    - string  # ruff check src/models/
+    - string  # mypy src/models/
+
+  skills:  # Skills to invoke after commands (optional)
+    - name: string       # validate | code-review | code-review-since
+      when: enum         # always | code_written | tests_written | api_created
+      args: string | null  # Optional arguments to pass to skill
+
+  success_criteria:  # What defines "done"
+    - string  # All tests pass
+    - string  # Coverage >= 80%
+    - string  # Code review passes (no CRITICAL issues)
+
+blocked_by:  # List of task IDs that must complete first
+  - string  # task-001
+
+blocks:  # List of task IDs waiting on this one
+  - string  # task-003
+  - string  # task-004
+
+created_at: datetime  # ISO 8601 timestamp
+started_at: datetime | null
+completed_at: datetime | null
+
+estimated_tokens: integer  # From duration_estimate
+actual_tokens: integer | null  # Filled in after completion
+
+notes: string | null  # Any additional context
+
+# Test results captured during validation
+test_results:
+  status: enum | null  # pass | fail | not_run | null
+  last_run: datetime | null
+
+  command_results:  # Results from validation.commands
+    - command: string
+      exit_code: integer
+      duration_seconds: float
+      output: string  # stdout + stderr
+      passed: boolean
+
+  skill_results:  # Results from validation.skills
+    - skill: string  # validate, code-review, etc.
+      invoked_at: datetime
+      passed: boolean
+      summary: string  # Brief summary of results
+      details: string | null  # Full output if needed
+      issues_found:
+        critical: integer
+        high: integer
+        medium: integer
+        low: integer
+
+  overall_passed: boolean  # true only if all commands AND skills passed
+  failure_reason: string | null  # Why it failed if overall_passed = false
