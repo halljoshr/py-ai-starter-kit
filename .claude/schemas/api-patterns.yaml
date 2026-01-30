@@ -1,0 +1,114 @@
+# API Architecture Decision Schema
+# Used by /discuss and /explore skills for API design decisions
+
+framework_choice:
+  fastapi:
+    use_when:
+      - "Modern Python API"
+      - "Need automatic OpenAPI docs"
+      - "Async/await required"
+      - "Type safety important"
+    pros:
+      - "Automatic API documentation"
+      - "Type hints for validation"
+      - "Built on Starlette (fast)"
+      - "Excellent async support"
+    cons:
+      - "Newer than Flask/Django"
+      - "Smaller ecosystem than Django"
+    default_when: "new_api OR async_required"
+
+  flask:
+    use_when:
+      - "Simple synchronous API"
+      - "Team familiar with Flask"
+      - "Microservice with minimal dependencies"
+    pros:
+      - "Lightweight and flexible"
+      - "Large ecosystem"
+      - "Well-documented"
+    cons:
+      - "Manual validation"
+      - "No built-in async support"
+    default_when: "simple_sync_api OR legacy"
+
+  django_rest_framework:
+    use_when:
+      - "Complex business logic"
+      - "Need admin interface"
+      - "ORM-heavy application"
+      - "Full-stack framework preferred"
+    pros:
+      - "Batteries included"
+      - "Excellent admin interface"
+      - "Mature and stable"
+    cons:
+      - "Heavier than FastAPI/Flask"
+      - "Opinionated structure"
+    default_when: "full_stack OR admin_required"
+
+authentication_patterns:
+  jwt_tokens:
+    use_when:
+      - "Stateless API"
+      - "Microservices architecture"
+      - "Mobile app clients"
+    implementation:
+      library: "python-jose or pyjwt"
+      storage: "Client-side only (JWT in Authorization header)"
+      expiration: "15-30 minutes for access token, 7 days for refresh"
+
+  api_keys:
+    use_when:
+      - "Service-to-service communication"
+      - "Third-party integrations"
+      - "Simple authentication needs"
+    implementation:
+      library: "secrets.token_urlsafe(32)"
+      storage: "Database with hash (bcrypt or argon2)"
+      rotation: "Support key rotation"
+
+  oauth2:
+    use_when:
+      - "Third-party login (Google, GitHub, etc.)"
+      - "Need authorization scopes"
+      - "Enterprise SSO"
+    implementation:
+      library: "authlib"
+      storage: "Database for tokens and state"
+
+# Smart defaults - apply without asking
+always_use:
+  - "Pydantic v2 for request/response validation"
+  - "async/await for I/O operations"
+  - "httpx (not requests) for external API calls"
+  - "Proper HTTP status codes (200, 201, 400, 401, 403, 404, 500)"
+  - "Request ID tracking for debugging"
+  - "Rate limiting for public endpoints"
+  - "CORS configuration for browser clients"
+  - "API versioning (URL prefix like /api/v1/ or header-based)"
+
+dependency_injection:
+  pattern: "FastAPI Depends() for shared dependencies"
+  use_for:
+    - "Database connections"
+    - "Authentication validation"
+    - "Request validation"
+    - "Service layer instances"
+
+error_handling:
+  pattern: "HTTPException with detail and status_code"
+  structure:
+    - "Use Pydantic models for error responses"
+    - "Include request_id in error responses"
+    - "Log errors server-side with context"
+    - "Never expose internal errors to clients"
+
+# Never do these
+never_do:
+  - "Use blocking I/O in async endpoints (use httpx, not requests)"
+  - "Return Pydantic v1 models (always use v2)"
+  - "Skip input validation (always validate with Pydantic)"
+  - "Store passwords in plain text"
+  - "Expose internal error details in production"
+  - "Use global state (use dependency injection)"

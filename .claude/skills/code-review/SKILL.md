@@ -34,7 +34,23 @@ git diff HEAD --name-only
 - Understand surrounding context
 - Check for ripple effects
 
-### Step 3: Evaluate on Five Dimensions
+### Step 3: Run Complexity Analysis
+
+```bash
+# Analyze code complexity metrics
+uv run python .claude/skills/code-review/scripts/analyze_complexity.py app/ src/
+```
+
+This provides:
+- Cyclomatic complexity per function
+- Functions exceeding complexity thresholds (>10, >15)
+- File length warnings (>500 lines)
+- Import count analysis
+- Refactoring recommendations
+
+Review the output to identify high-complexity code requiring special attention.
+
+### Step 4: Evaluate on Five Dimensions
 
 #### 1. Logic
 - Correctness of algorithms
@@ -52,6 +68,16 @@ git diff HEAD --name-only
 - Improper authentication
 - Missing input validation
 
+**Comprehensive Security Review:** Consult `references/security-checklist.md` for OWASP-aligned security patterns, including:
+- Input validation patterns
+- Authentication/Authorization best practices
+- Password storage, JWT security, API key management
+- Path traversal prevention
+- Error message security
+- CORS configuration
+- Cryptography best practices
+- File upload validation
+
 #### 3. Performance
 - N+1 query problems
 - Inefficient algorithms
@@ -62,11 +88,13 @@ git diff HEAD --name-only
 
 #### 4. Quality
 - DRY violations
-- Function complexity
+- Function complexity (review complexity analysis results from Step 3)
 - Variable naming clarity
 - Type annotations completeness
 - Documentation/docstrings
 - Code duplication
+
+**Note:** Use complexity analysis output from Step 3 to identify functions requiring refactoring (complexity > 10).
 
 #### 5. Standards
 - CLAUDE.md adherence

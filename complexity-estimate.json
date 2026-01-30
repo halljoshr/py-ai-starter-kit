@@ -1,0 +1,68 @@
+{
+  "path": "piv-swarm-example/src",
+  "total_files": 5,
+  "total_loc": 11,
+  "total_functions": 1,
+  "total_classes": 0,
+  "total_imports": 1,
+  "unique_packages": 1,
+  "top_packages": [
+    [
+      "fastapi",
+      1
+    ]
+  ],
+  "avg_loc_per_file": 2.2,
+  "avg_functions_per_file": 0.2,
+  "file_size_distribution": {
+    "small": 5,
+    "medium": 0,
+    "large": 0,
+    "very_large": 0
+  },
+  "complexity_estimate": "Medium",
+  "files": [
+    {
+      "file": "piv-swarm-example/src/__init__.py",
+      "loc": 0,
+      "functions": 0,
+      "classes": 0,
+      "imports": 0,
+      "packages": []
+    },
+    {
+      "file": "piv-swarm-example/src/main.py",
+      "loc": 11,
+      "functions": 1,
+      "classes": 0,
+      "imports": 1,
+      "packages": [
+        "fastapi"
+      ]
+    },
+    {
+      "file": "piv-swarm-example/src/models/__init__.py",
+      "loc": 0,
+      "functions": 0,
+      "classes": 0,
+      "imports": 0,
+      "packages": []
+    },
+    {
+      "file": "piv-swarm-example/src/services/__init__.py",
+      "loc": 0,
+      "functions": 0,
+      "classes": 0,
+      "imports": 0,
+      "packages": []
+    },
+    {
+      "file": "piv-swarm-example/src/api/__init__.py",
+      "loc": 0,
+      "functions": 0,
+      "classes": 0,
+      "imports": 0,
+      "packages": []
+    }
+  ]
+}

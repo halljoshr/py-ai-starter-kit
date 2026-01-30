@@ -1,0 +1,109 @@
+# Testing Strategy Decision Schema
+# Used by /discuss, /explore, and /validate skills
+
+test_tier_structure:
+  unit_tests:
+    location: "tests/unit/"
+    purpose: "Test business logic in isolation"
+    characteristics:
+      speed: "< 1 second per test"
+      mocking: "All I/O operations mocked"
+      coverage_target: "90%+ for business logic"
+    when_to_run: "Every commit, during development"
+    example_targets:
+      - "Pure functions"
+      - "Data transformations"
+      - "Business rule validation"
+      - "Pydantic model validation"
+
+  integration_tests:
+    location: "tests/integration/"
+    purpose: "Test service interactions and API integrations"
+    characteristics:
+      speed: "1-30 seconds per test"
+      mocking: "Minimal - prefer real dependencies where safe"
+      coverage_target: "70%+ for integration points"
+    when_to_run: "Before PR, during CI"
+    example_targets:
+      - "Database operations (real database)"
+      - "API endpoint flows"
+      - "External service integrations"
+      - "Authentication flows"
+
+  e2e_tests:
+    location: "tests/e2e/"
+    purpose: "Complete user workflows end-to-end"
+    characteristics:
+      speed: "> 30 seconds per test"
+      mocking: "None - real system behavior"
+      coverage_target: "Critical user paths only"
+    when_to_run: "Before merge to main, before releases"
+    example_targets:
+      - "Complete user signup → login → action flow"
+      - "Payment processing end-to-end"
+      - "Multi-step workflows"
+
+testing_tools:
+  framework: "pytest"
+  async_support: "pytest-asyncio"
+  http_client: "httpx (for FastAPI TestClient or direct API calls)"
+  mocking: "pytest-mock or unittest.mock"
+  fixtures: "pytest fixtures with appropriate scope (function, module, session)"
+  coverage: "pytest-cov with 80% minimum threshold"
+
+fixture_scopes:
+  function:
+    use_for: "Test-specific data that should be fresh each test"
+    example: "User instance, test data objects"
+
+  module:
+    use_for: "Shared setup within a test file"
+    example: "Database connection for one test module"
+
+  session:
+    use_for: "Expensive setup once per test run"
+    example: "Database schema creation, Docker containers"
+
+mocking_strategy:
+  unit_tests:
+    mock: "External services, database, file I/O, time, random"
+    reason: "Fast, isolated, deterministic"
+
+  integration_tests:
+    mock: "Only external third-party services"
+    use_real: "Database, internal services, file system"
+    reason: "Test real interactions, catch integration issues"
+
+  e2e_tests:
+    mock: "Nothing (or only expensive external services like payment gateways)"
+    reason: "Test real user experience"
+
+# Smart defaults - apply without asking
+always_include:
+  - "Arrange-Act-Assert pattern in test structure"
+  - "Clear test names describing what is being tested"
+  - "Docstrings explaining test purpose and expected behavior"
+  - "Parametrize tests for multiple input cases"
+  - "Cleanup fixtures (yield fixtures or context managers)"
+  - "Test both success and failure cases"
+  - "Test edge cases and boundary conditions"
+
+coverage_requirements:
+  minimum: 80
+  target: 90
+  exclude:
+    - "tests/"
+    - "migrations/"
+    - "__init__.py"
+    - "conftest.py"
+  fail_under: 80
+
+# Never do these
+never_do:
+  - "Skip tests because 'I tested manually'"
+  - "Test implementation details (test behavior, not internals)"
+  - "Use sleep() for timing - use proper async/await or mocking"
+  - "Share state between tests (causes flaky tests)"
+  - "Write tests that depend on test execution order"
+  - "Commit commented-out tests (fix or delete them)"
+  - "Use print() for debugging (use proper logging or pytest -s)"

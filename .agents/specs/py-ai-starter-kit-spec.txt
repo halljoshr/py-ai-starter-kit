@@ -1,0 +1,1677 @@
+<project_specification>
+
+<project_name>
+py-ai-starter-kit: PIV-Swarm Methodology Framework
+</project_name>
+
+<overview>
+A comprehensive methodology framework for systematic AI-assisted Python development using the PIV (Prime → Implement → Validate) workflow. Provides 24+ Claude Code skills, swarm-lite multi-session architecture, state management, and quality gates for building production-quality software. Designed for massive projects (10M+ lines) with emphasis on token efficiency, strict TDD, and institutional knowledge preservation.
+</overview>
+
+<architecture_philosophy>
+**Core Philosophy:** "Context is King, Sessions are Natural, Quality is Non-Negotiable"
+
+**Design Principles:**
+- KISS (Keep It Simple, Stupid) - Simple solutions over complex ones
+- YAGNI (You Aren't Gonna Need It) - Build only what's needed now
+- Dependency Inversion - Depend on abstractions, not implementations
+- Open/Closed Principle - Open for extension, closed for modification
+- Single Responsibility - Each module has one clear purpose
+- Fail Fast - Check errors early, raise exceptions immediately
+
+**Target Audience:**
+- Open-source toolkit for Python community
+- Validated through company use first
+- Battle-tested on massive projects before public release
+</architecture_philosophy>
+
+<technology_stack>
+  <framework>
+    - Python 3.11+ (Language)
+    - Claude Code (AI assistant platform)
+    - UV (Package management - blazing fast)
+    - Git (Version control with atomic commits)
+  </framework>
+
+  <state_management>
+    - YAML (Machine-readable state - session, tasks, agents)
+    - Markdown (Human-readable reports - STATE.md)
+    - JSON (Analytics and metrics - optional)
+  </state_management>
+
+  <quality_tools>
+    - ruff (Linting and formatting - replaces Black/flake8)
+    - mypy (Type checking - strict mode)
+    - pytest (Testing framework with 80% coverage minimum)
+    - pytest-cov (Coverage measurement)
+  </quality_tools>
+
+  <skills_system>
+    - 24+ Claude Code skills in .claude/skills/
+    - Markdown skill definitions (SKILL.md)
+    - Python helper scripts (co-located with skills)
+    - YAML schemas in .claude/schemas/
+  </skills_system>
+
+  <documentation>
+    - CLAUDE.md (Primary instructions for Claude)
+    - 15 reference docs in .claude/reference/
+    - 7 research documents in .agents/research/
+    - GOALS.md (Strategic roadmap - 21 goals)
+  </documentation>
+</technology_stack>
+
+<core_features>
+  <feature_group_1_prime_workflow>
+    **Prime: Codebase Context Establishment**
+    - Two modes: /prime (normal 8-10K tokens) and /prime-deep (40-50K tokens)
+    - Shallow discovery: Structure + docs + git + samples
+    - Skips heavy docs (load on-demand during implementation)
+    - Conditional re-prime on session resume (only if codebase changed)
+    - Success: Complete context in <10K tokens for known codebases
+  </feature_group_1_prime_workflow>
+
+  <feature_group_2_discussion_workflow>
+    **Discuss: Interactive Design Decisions**
+    - Clarify ambiguous requirements
+    - Make architectural decisions with user input
+    - Review and improve existing skills
+    - Capture all decisions with rationale
+    - Success: All ambiguity resolved before spec creation
+  </feature_group_2_discussion_workflow>
+
+  <feature_group_3_spec_creation>
+    **Spec: Formal Specification Generation**
+    - Anthropic XML format for machine-readability
+    - Smart defaults (database, caching, async patterns)
+    - Minimal user questions (only when truly ambiguous)
+    - Integration with /plan for task breakdown
+    - Success: Complete specification ready for autonomous implementation
+  </feature_group_3_spec_creation>
+
+  <feature_group_4_planning>
+    **Plan: Task Breakdown with Dependencies**
+    - Convert spec into individual task-NNN.yaml files
+    - Define dependencies (blocked_by, blocks)
+    - Include test requirements in each task
+    - Phase-based organization (20-40K tokens per phase)
+    - Success: Tasks ready for execution with clear acceptance criteria
+  </feature_group_4_planning>
+
+  <feature_group_5_execution>
+    **Execute: Implementation with Validation**
+    - One phase at a time (fresh 50K context per phase)
+    - Strict TDD by default (test-first, single atomic commit)
+    - Per-task validation (verify + lint + type + unit tests)
+    - Automatic commits after each task passes
+    - Success: Working code with comprehensive tests
+  </feature_group_5_execution>
+
+  <feature_group_6_validation>
+    **Validate: Comprehensive Quality Gates**
+    - Per-task: Unit tests + lint + type check
+    - Per-phase: Integration tests
+    - End-of-feature: E2E tests
+    - Coverage: New code 80%+, overall project 80%+
+    - Success: All quality gates pass before commit
+  </feature_group_6_validation>
+
+  <feature_group_7_state_management>
+    **State: YAML-based Multi-Session Coordination**
+    - session.yaml (feature metadata, current phase)
+    - task-NNN.yaml (individual tasks with ownership)
+    - agents.yaml (agent registry for future swarm mode)
+    - messages.yaml (agent communication log)
+    - STATE.md (human-readable snapshot via /status skill)
+    - Success: Seamless session pause/resume with full context
+  </feature_group_7_state_management>
+
+  <feature_group_8_swarm_architecture>
+    **Swarm-Lite: Multi-Session Manual Coordination**
+    - Today: Single agent mode, manual multi-session via shared YAML
+    - Future (Priority 2-3): Automatic agent spawning and orchestration
+    - Supports: Orchestrator + 4 researchers + 3 executors + reviewer + debugger
+    - Success: Multiple Claude sessions coordinate via state files
+  </feature_group_8_swarm_architecture>
+</core_features>
+
+<data_models>
+  <session_model>
+    File: .agents/state/session.yaml
+
+    Fields:
+    - feature: str (feature name)
+    - phase: str (current phase: prime|discuss|spec|plan|execute|validate|commit)
+    - status: str (active|paused|completed)
+    - created_at: datetime
+    - last_updated: datetime
+    - tokens_used: int (cumulative across all sessions)
+    - tokens_budget: int (200000 default)
+    - current_task: str (task-NNN or null)
+    - next_task: str (task-NNN or null)
+
+    Validation:
+    - phase must be valid PIV phase
+    - tokens_used <= tokens_budget
+    - Timestamps in ISO 8601 format
+
+    Usage:
+    - Created by /prime or /discuss
+    - Updated by all workflow skills
+    - Read by /resume to restore context
+  </session_model>
+
+  <task_model>
+    File: .agents/tasks/task-NNN.yaml (where NNN is zero-padded number)
+
+    Fields:
+    - id: str (task-001, task-002, etc.)
+    - name: str (brief task description)
+    - description: str (detailed requirements)
+    - phase: int (1, 2, 3 for phase organization)
+    - status: str (pending|in_progress|completed|failed)
+    - owner: str (agent id or null)
+    - priority: str (high|medium|low)
+    - blocked_by: list[str] (task ids that must complete first)
+    - blocks: list[str] (task ids waiting on this one)
+    - tdd_required: bool (default true)
+    - tdd_opt_out: bool (default false)
+    - tdd_rationale: str (required if opt_out true)
+    - verify: str (bash command to verify completion)
+    - done: str (success criteria)
+    - files: list[str] (files to create/modify)
+    - patterns: list[str] (reference docs to follow)
+    - tokens_estimated: int
+    - tokens_actual: int
+    - started_at: datetime (null until started)
+    - completed_at: datetime (null until done)
+    - test_results: dict (passed, failed, skipped counts)
+
+    Validation:
+    - status transitions: pending → in_progress → completed/failed
+    - tdd_opt_out requires tdd_rationale (non-empty)
+    - blocked_by tasks must exist
+    - verify command must be valid bash
+
+    Usage:
+    - Created by /plan skill
+    - Updated by /execute skill during implementation
+    - Read by /status to generate reports
+  </task_model>
+
+  <agents_model>
+    File: .agents/state/agents.yaml
+
+    Structure:
+    agents:
+      - id: str (main, executor-1, researcher-1)
+        role: str (orchestrator|executor|researcher|reviewer|debugger)
+        status: str (idle|active|paused)
+        capabilities: list[str] (planning, execution, review, etc.)
+        specialization: str (optional: stack|features|architecture|pitfalls)
+        current_task: str (task-NNN or null)
+        tasks_completed: int
+        tokens_used: int
+        created_at: datetime
+        last_active: datetime
+
+    roles:
+      orchestrator:
+        description: str
+        can_spawn: bool (true)
+        max_instances: int (1)
+
+      researcher:
+        description: str
+        can_spawn: bool (false)
+        max_instances: int (4)
+        specializations: list[str]
+
+      executor:
+        description: str
+        can_spawn: bool (false)
+        max_instances: int (3)
+
+    config:
+      mode: str (single|swarm)
+      swarm:
+        max_agents: int (8)
+        auto_scale: bool
+        min_executors: int (1)
+        max_executors: int (3)
+      token_budgets:
+        researcher: int (30000)
+        executor: int (50000)
+        reviewer: int (20000)
+        debugger: int (30000)
+
+    Validation:
+    - Only one orchestrator allowed
+    - Executor max_instances respected
+    - Token budgets per role enforced
+
+    Usage:
+    - Created by initialization
+    - Updated as agents claim/complete tasks
+    - Read by /status to show agent activity
+  </agents_model>
+
+  <state_md_model>
+    File: .agents/state/STATE.md (generated, not edited manually)
+
+    Content (markdown format):
+    - Session Info (feature, phase, started, last updated)
+    - Token Budget (visual progress bar)
+    - Agents (table: agent, role, status, current task)
+    - Tasks (pending, in progress, completed lists)
+    - Progress Summary (completion percentage, visual bar)
+    - Blockers (list any blocking issues)
+    - Recent Activity (time, agent, action table)
+    - Notes (any important observations)
+    - Quick Commands (helpful command reference)
+
+    Generation:
+    - Created by /status skill
+    - Reads session.yaml, task-NNN.yaml, agents.yaml
+    - Transforms YAML to human-readable markdown
+    - Updates timestamp on generation
+
+    Usage:
+    - Human-readable progress snapshot
+    - Quick orientation when resuming
+    - Shareable status report
+  </state_md_model>
+</data_models>
+
+<skills_to_implement>
+  <skill_prime>
+    File: .claude/skills/prime/SKILL.md
+
+    Purpose: Establish comprehensive codebase context before planning/implementation
+
+    Modes:
+    - /prime (normal): 8-10K tokens, shallow discovery
+    - /prime-deep: 40-50K tokens, comprehensive analysis
+
+    Normal Mode Actions:
+    1. Read project structure (git ls-files | head -100, directory tree)
+    2. Read CLAUDE.md and README.md (core instructions)
+    3. Read recent git state (status, last 10 commits, current branch)
+    4. Sample 1-2 files (entry point, service, test - see patterns)
+    5. Generate context report to .agents/init-context/{project}-context-{date}.md
+
+    Skips (load on-demand):
+    - .claude/reference/*.md (15 docs)
+    - .claude/skills/*/SKILL.md (already available)
+    - .agents/research/*.md (historical)
+    - Full file contents (use --files-with-matches)
+
+    Deep Mode Actions:
+    - Everything from normal mode
+    - Read all reference docs
+    - Read 5-10 example files
+    - Cross-reference analysis
+    - Comprehensive architecture understanding
+
+    Use When:
+    - Normal: Executor role, known codebase, small changes
+    - Deep: Orchestrator role, spec creation, first time on codebase, major refactoring
+
+    Patterns:
+    - .claude/reference/prime-optimization-recommendations.md
+
+    Validation:
+    - Context report generated
+    - Token usage within budget (normal <10K, deep <50K)
+    - Contains: structure, conventions, git state, key patterns
+  </skill_prime>
+
+  <skill_discuss>
+    File: .claude/skills/discuss/SKILL.md
+
+    Purpose: Interactive design decisions before spec creation
+
+    Actions:
+    1. Load context (prime artifacts, README, previous feedback)
+    2. Identify discussion topics (ambiguities, decisions, alternatives)
+    3. Review existing skills for improvement opportunities
+    4. Ask user questions for architectural decisions (AskUserQuestion)
+    5. Capture decisions with rationale
+    6. Generate discussion summary to .agents/research/{feature}-discussion-{date}.md
+
+    Discussion Topics:
+    - Ambiguous requirements (vague descriptions)
+    - Architectural decisions (database, caching, auth, async)
+    - Skill improvements (gaps, inconsistencies)
+    - Design trade-offs (simplicity vs flexibility)
+
+    Patterns:
+    - Use AskUserQuestion with 2-4 clear options
+    - Explain trade-offs for each option
+    - Capture rationale for decisions
+
+    Validation:
+    - All ambiguities resolved
+    - All decisions documented with rationale
+    - Discussion summary saved
+    - Ready for /spec phase
+  </skill_discuss>
+
+  <skill_spec>
+    File: .claude/skills/spec/SKILL.md
+
+    Purpose: Generate formal Anthropic XML specification
+
+    Actions:
+    1. Read requirements (README or specified file)
+    2. Read discussion summary (decisions made)
+    3. Extract explicit decisions from requirements
+    4. Apply smart defaults (database, caching, auth, async)
+    5. Ask questions only when no clear default
+    6. Generate Anthropic XML specification
+    7. Save to .agents/specs/{feature}-spec.txt
+
+    Smart Defaults:
+    - Database: demo/test→SQLite, 10M+rows→PostgreSQL, <5 models→SQLite
+    - Caching: <100ms→Redis?, <500ms→LRU, else→None
+    - Auth: demo/internal→None, public→Ask
+    - Async: webhooks/external→Yes, <100ms→Yes, else→Sync
+
+    Anthropic XML Format:
+    - project_name
+    - overview
+    - technology_stack
+    - core_features
+    - data_models
+    - api_endpoints (if applicable)
+    - services_to_implement
+    - database_schema (if applicable)
+    - testing_strategy
+    - implementation_steps (session-sized)
+    - session_management
+    - success_criteria
+    - constraints
+    - gotchas
+
+    Patterns:
+    - Include exact file paths
+    - Specify which reference docs to follow
+    - Document gotchas upfront
+    - Break into 20-40K token steps
+
+    Validation:
+    - Spec is comprehensive (all decisions captured)
+    - Implementation steps are session-sized
+    - All patterns referenced
+    - Success criteria are testable
+  </skill_spec>
+
+  <skill_plan>
+    File: .claude/skills/plan/SKILL.md
+
+    Purpose: Convert spec into individual task files with dependencies
+
+    Actions:
+    1. Read spec from .agents/specs/{feature}-spec.txt
+    2. Extract implementation_steps from spec
+    3. For each step, create task-NNN.yaml:
+       - Extract name, description, files, patterns, verify
+       - Determine phase (group related tasks)
+       - Define dependencies (blocked_by)
+       - Include test requirements (TDD by default)
+       - Estimate tokens
+    4. Create task dependency graph
+    5. Validate no circular dependencies
+    6. Generate .agents/plans/{feature}-plan.md (summary)
+
+    Task Creation Rules:
+    - Each task is independently testable
+    - Tasks have clear done criteria
+    - Dependencies minimize blocking
+    - Phase 1: data models, Phase 2: services, Phase 3: APIs, Phase 4: tests
+
+    Patterns:
+    - Test requirements included in every task
+    - Verify command specifies exact test to run
+    - TDD enforced unless explicit opt-out with rationale
+
+    Validation:
+    - All tasks have verify commands
+    - No circular dependencies
+    - Task files valid YAML
+    - Plan summary readable
+  </skill_plan>
+
+  <skill_execute>
+    File: .claude/skills/execute/SKILL.md
+    Helper Scripts: .claude/skills/execute/scripts/ (if needed for validation orchestration)
+
+    Purpose: Implement tasks with validation and atomic commits
+
+    Scope: One phase at a time (50K fresh context per phase)
+
+    Actions Per Task:
+    1. Load state (session.yaml, find next pending unblocked task)
+    2. Mark task in_progress (update task-NNN.yaml, set owner, started_at)
+    3. Check TDD requirement:
+       - If tdd_opt_out=true → Ask user approval with rationale
+       - If denied → mark task blocked, stop
+    4. Implement with TDD:
+       - Write failing test first
+       - Implement code to pass test
+       - Refactor if needed
+       - Single atomic commit
+    5. Run validation:
+       - Task verify command
+       - ruff check (modified files)
+       - mypy (modified files)
+       - pytest tests/unit/ -v (all unit tests)
+    6. If validation fails:
+       - Mark task failed
+       - Report issues to user
+       - Stop execution
+    7. If validation passes:
+       - Commit with message:
+         ```
+         <type>(scope): <task-name>
+
+         Task: task-NNN
+         Verify: <verify-command> passed
+         Coverage: <percentage>% on modified files
+
+         Co-Authored-By: Claude <noreply@anthropic.com>
+         ```
+       - Mark task completed
+       - Update tokens_actual in task file
+    8. Check if phase complete:
+       - If all phase tasks done → run integration tests
+       - If integration fails → mark phase failed, stop
+    9. Find next task (within same phase)
+    10. Repeat until phase complete or token warning
+
+    Token Management:
+    - Track usage continuously
+    - Warn at 75% (150K)
+    - Critical at 88% (175K)
+    - Auto-checkpoint at critical threshold
+
+    Patterns:
+    - .claude/reference/tdd-best-practices.md (if exists)
+    - Task-specific patterns from patterns field
+
+    Validation Per Task:
+    - Test passes (verify command)
+    - Lint passes (ruff)
+    - Type check passes (mypy)
+    - Unit tests pass (all)
+    - Coverage >= 80% on new code
+
+    Validation Per Phase:
+    - Integration tests pass
+    - Overall coverage >= 80%
+
+    Commit Strategy:
+    - Atomic: One commit per task
+    - Format: Conventional commits
+    - Attribution: Claude co-author
+  </skill_execute>
+
+  <skill_validate>
+    File: .claude/skills/validate/SKILL.md
+
+    Purpose: Final comprehensive quality gates before feature completion
+
+    Actions:
+    1. Check all tasks completed (no pending, no failed)
+    2. Run full test suite:
+       - Unit tests: uv run pytest tests/unit/ -v
+       - Integration tests: uv run pytest tests/integration/ -v
+       - E2E tests: uv run pytest tests/e2e/ -v (if exist)
+    3. Check coverage:
+       - Overall: uv run pytest --cov=app --cov=src --cov-fail-under=80
+       - Per-file: Report files below 80%
+    4. Run quality tools:
+       - Linting: uv run ruff check .
+       - Type checking: uv run mypy app/ src/
+    5. Verify acceptance criteria (from spec)
+    6. Generate validation report to .agents/reports/validation-{date}.md
+
+    Validation Report Sections:
+    - Test Results (passed/failed/skipped counts)
+    - Coverage Report (overall %, per-module %)
+    - Quality Checks (lint/type results)
+    - Acceptance Criteria (checklist)
+    - Blockers (any issues found)
+    - Recommendation (ready to commit or needs fixes)
+
+    Patterns:
+    - .claude/reference/pytest-best-practices.md
+    - .claude/reference/style-conventions.md
+
+    Validation:
+    - All tests passing
+    - Coverage >= 80% overall
+    - Coverage >= 80% per new file
+    - No lint errors
+    - No type errors
+    - All acceptance criteria met
+  </skill_validate>
+
+  <skill_status>
+    File: .claude/skills/status/SKILL.md
+    Helper Scripts: .claude/skills/status/scripts/generate_report.py
+
+    Purpose: Generate human-readable status report from YAML state
+
+    Actions:
+    1. Read session.yaml (feature, phase, tokens)
+    2. Read task-NNN.yaml files (status, owner, results)
+    3. Read agents.yaml (agent activity)
+    4. Generate STATE.md with:
+       - Session Info table
+       - Token Budget visual bar
+       - Agents table
+       - Tasks categorized (pending/in progress/completed)
+       - Progress bar
+       - Blockers list
+       - Recent Activity timeline
+       - Notes
+       - Quick Commands reference
+    5. Save to .agents/state/STATE.md
+    6. Display summary to user
+
+    Helper Script:
+    - scripts/generate_report.py:
+      - Read YAML files
+      - Transform to markdown
+      - Generate visual elements (progress bars)
+      - Format tables
+      - Return markdown string
+
+    Usage from SKILL.md:
+    ```bash
+    uv run python .claude/skills/status/scripts/generate_report.py \
+      --session .agents/state/session.yaml \
+      --tasks .agents/tasks/ \
+      --agents .agents/state/agents.yaml \
+      --output .agents/state/STATE.md
+    ```
+
+    Patterns:
+    - Clean, scannable markdown
+    - Visual elements for progress
+    - Actionable quick commands
+
+    Validation:
+    - STATE.md generated successfully
+    - All YAML files parsed correctly
+    - No errors in report generation
+  </skill_status>
+
+  <skill_pause>
+    File: .claude/skills/pause/SKILL.md
+
+    Purpose: Checkpoint session state for later resume
+
+    Actions:
+    1. Update session.yaml:
+       - Set status to paused
+       - Record last_updated timestamp
+       - Save tokens_used
+    2. Run validation (ensure nothing broken):
+       - uv run pytest tests/unit/ -v --tb=short
+    3. Commit if uncommitted work exists:
+       - git add relevant files
+       - git commit -m "WIP: Checkpoint at {phase} {task}"
+    4. Display resume instructions:
+       - Location of session files
+       - Command to resume: /resume
+       - Current state summary
+
+    Validation:
+    - session.yaml updated
+    - Tests still passing
+    - Work committed (if any)
+    - User knows how to resume
+  </skill_pause>
+
+  <skill_resume>
+    File: .claude/skills/resume/SKILL.md
+
+    Purpose: Restore session state and continue work
+
+    Actions:
+    1. Read session.yaml (feature, phase, current_task)
+    2. Display STATE.md (human-readable summary)
+    3. Check git state:
+       - git log -1 (last commit)
+       - git status (any uncommitted changes)
+    4. Conditional re-prime:
+       - If commits since last session OR uncommitted changes:
+         → Run /prime --quick (~8K tokens)
+       - Else:
+         → Skip re-prime (trust session state)
+    5. Read relevant artifacts:
+       - After discuss: Read discussion summary
+       - After plan: Read spec and task files
+       - After execute: Read STATE.md and task results
+    6. Determine next action:
+       - Phase complete? → Next phase
+       - Task in_progress? → Continue task
+       - Tasks pending? → Execute next task
+    7. Prompt user for next command
+
+    Conditional Re-Prime Logic:
+    ```bash
+    LAST_SESSION=$(cat session.yaml | grep last_updated | cut -d' ' -f2)
+    COMMITS_SINCE=$(git log --since="$LAST_SESSION" --oneline | wc -l)
+    UNCOMMITTED=$(git status --porcelain | wc -l)
+
+    if [ $COMMITS_SINCE -gt 0 ] || [ $UNCOMMITTED -gt 0 ]; then
+      echo "Codebase changed, running /prime --quick"
+      # Execute prime
+    else
+      echo "Codebase unchanged, using cached context"
+    fi
+    ```
+
+    Patterns:
+    - Efficient context restoration
+    - Only re-prime when necessary
+    - Clear next steps
+
+    Validation:
+    - Session state loaded
+    - Context current (re-primed if needed)
+    - User knows next action
+  </skill_resume>
+
+  <skill_optimize>
+    File: .claude/skills/optimize/SKILL.md
+    Helper Scripts:
+      - .claude/skills/optimize/scripts/profile_cpu.py
+      - .claude/skills/optimize/scripts/profile_memory.py
+      - .claude/skills/optimize/scripts/profile_io.py
+      - .claude/skills/optimize/scripts/benchmark.py
+      - .claude/skills/optimize/scripts/generate_report.py
+    Templates:
+      - .claude/skills/optimize/templates/performance_report.md.j2
+    Examples:
+      - .claude/skills/optimize/examples/sample-report.md
+
+    Purpose: Comprehensive performance profiling and optimization recommendations
+
+    Actions:
+    1. Run CPU profiling:
+       ```bash
+       uv run python .claude/skills/optimize/scripts/profile_cpu.py \
+         --target src/app/main.py \
+         --output .agents/reports/profile_cpu.json
+       ```
+    2. Run memory profiling:
+       ```bash
+       uv run python .claude/skills/optimize/scripts/profile_memory.py \
+         --target src/app/main.py \
+         --output .agents/reports/profile_memory.json
+       ```
+    3. Run I/O profiling:
+       ```bash
+       uv run python .claude/skills/optimize/scripts/profile_io.py \
+         --target src/app/ \
+         --output .agents/reports/profile_io.json
+       ```
+    4. Run benchmarks:
+       ```bash
+       uv run python .claude/skills/optimize/scripts/benchmark.py \
+         --suite tests/benchmarks/ \
+         --output .agents/reports/benchmark.json
+       ```
+    5. Generate consolidated report:
+       ```bash
+       uv run python .claude/skills/optimize/scripts/generate_report.py \
+         --cpu .agents/reports/profile_cpu.json \
+         --memory .agents/reports/profile_memory.json \
+         --io .agents/reports/profile_io.json \
+         --benchmark .agents/reports/benchmark.json \
+         --template .claude/skills/optimize/templates/performance_report.md.j2 \
+         --output .agents/reports/performance-{date}.md
+       ```
+
+    Helper Script: profile_cpu.py
+    ```python
+    import cProfile
+    import pstats
+    import json
+    from pathlib import Path
+
+    def profile_module(target: str) -> dict:
+        profiler = cProfile.Profile()
+        # Run target module with profiling
+        profiler.runcall(...)
+
+        stats = pstats.Stats(profiler)
+        return {
+            "hotspots": stats.get_top_functions(20),
+            "total_time": stats.total_tt,
+            "call_count": stats.total_calls,
+            "recommendations": generate_recommendations(stats)
+        }
+    ```
+
+    Report Sections:
+    - Executive Summary (key findings)
+    - CPU Hotspots (top 20 functions by time)
+    - Memory Usage (peak, growth, top consumers)
+    - I/O Bottlenecks (slow queries, N+1 patterns)
+    - Benchmark Results (before/after comparison if available)
+    - Optimization Recommendations (prioritized by impact)
+
+    Patterns:
+    - .claude/reference/performance-optimization.md
+
+    Validation:
+    - All profiling scripts run successfully
+    - Report generated with actionable recommendations
+    - No errors in profiling process
+  </skill_optimize>
+
+  <skill_commit>
+    File: .claude/skills/commit/SKILL.md
+
+    Purpose: Semantic commit workflow after feature completion
+
+    Actions:
+    1. Run git status (see all untracked/modified files)
+    2. Run git diff (see staged and unstaged changes)
+    3. Run git log -10 --oneline (see recent commit style)
+    4. Analyze changes and draft commit message:
+       - Type: feat, fix, docs, style, refactor, test, chore
+       - Scope: module or component affected
+       - Subject: What changed (imperative mood)
+       - Body: Why it changed (1-2 sentences)
+       - Footer: Co-author attribution
+    5. Add files to staging:
+       - Prefer specific files over git add -A
+       - Avoid secrets (.env, credentials)
+    6. Create commit:
+       ```bash
+       git commit -m "$(cat <<'EOF'
+       <type>(<scope>): <subject>
+
+       <body>
+
+       Co-Authored-By: Claude (model-id) <noreply@anthropic.com>
+       EOF
+       )"
+       ```
+    7. Run git status after commit (verify success)
+
+    Commit Message Rules:
+    - Never include "claude code" or "written by claude code"
+    - Subject: imperative mood, lowercase, no period
+    - Body: explain WHY, not WHAT (code shows what)
+    - Co-author: Always include Claude attribution
+
+    Patterns:
+    - .claude/reference/git-workflow.md
+
+    Validation:
+    - Commit created successfully
+    - Git log shows commit
+    - No untracked files committed accidentally
+  </skill_commit>
+
+  <skills_remaining>
+    Additional skills to implement (following same patterns):
+
+    - /code-review: Full codebase review with recommendations
+    - /code-review-since: Review changes since commit
+    - /rca: Root cause analysis for bugs
+    - /implement-fix: Bug fix implementation workflow
+    - /execution-report: Generate post-implementation report
+    - /task-create: Create individual task
+    - /task-list: List all tasks
+    - /task-update: Update task status
+    - /task-complete: Mark task complete with verification
+
+    All follow skill structure:
+    - SKILL.md with clear purpose, actions, patterns, validation
+    - Helper scripts in scripts/ subdirectory if needed
+    - Co-located with skill definition
+  </skills_remaining>
+</skills_to_implement>
+
+<implementation_steps>
+  <step_0_priority_1_goal_1>
+    Task: Prime Optimization - Implement efficient /prime normal and /prime-deep modes
+    Duration: 2 sessions (~35K tokens)
+    Priority: CRITICAL - Blocks everything else
+    Timeline: Week 1-2
+
+    Files:
+    - .claude/skills/prime/SKILL.md (modify)
+    - .agents/init-context/ (output directory)
+    - tests/skills/test_prime.py (new - if testable)
+
+    Actions:
+    1. Update /prime SKILL.md with normal vs deep logic
+    2. Normal mode (~8-10K tokens):
+       - Read structure: git ls-files | head -100, directory tree
+       - Read CLAUDE.md, README.md
+       - Read git state: status, log -10, branch
+       - Sample 1-2 files (entry point, service, test)
+       - Skip: reference docs, skill files, research docs, full file contents
+    3. Deep mode (~40-50K tokens):
+       - Everything from normal
+       - Read all .claude/reference/*.md
+       - Read 5-10 example files
+       - Cross-reference analysis
+    4. Document when to use each mode:
+       - Normal: executor, known codebase, small changes
+       - Deep: orchestrator, spec creation, first time, major refactoring
+    5. Test on py-ai-starter-kit (this project)
+    6. Measure token usage (must be <10K normal, <50K deep)
+
+    Patterns:
+    - .claude/reference/prime-optimization-recommendations.md (if exists)
+    - Shallow discovery: locate don't read
+
+    Validation:
+    - uv run /prime generates context report in <10K tokens
+    - uv run /prime-deep generates comprehensive report in <50K tokens
+    - Reports include: structure, conventions, git state, patterns
+    - No unnecessary reads (verified by checking tool call logs)
+  </step_0_priority_1_goal_1>
+
+  <step_1_priority_1_goal_2>
+    Task: Spec Creation Process - Build /discuss and /spec skills
+    Duration: 3 sessions (~55K tokens)
+    Priority: HIGH - Needed for dogfooding
+    Timeline: Week 2-3
+
+    Files:
+    - .claude/skills/discuss/SKILL.md (new)
+    - .claude/skills/spec/SKILL.md (modify - already exists)
+    - .agents/research/ (output directory for discussions)
+    - .agents/specs/ (output directory for specs)
+
+    Actions:
+    1. Build /discuss skill:
+       - Load context (prime artifacts, README)
+       - Identify discussion topics
+       - Review existing skills for improvements
+       - Use AskUserQuestion for decisions
+       - Capture decisions with rationale
+       - Save to .agents/research/{feature}-discussion-{date}.md
+    2. Enhance /spec skill:
+       - Read discussion summary
+       - Apply smart defaults (database, caching, auth, async)
+       - Generate Anthropic XML spec
+       - Include session management section
+       - Save to .agents/specs/{feature}-spec.txt
+    3. Create spec templates (if helpful):
+       - API integration template
+       - Data processing template
+       - Refactoring template
+    4. Test on py-ai-starter-kit (this project):
+       - Run /discuss overall-project (done in this session)
+       - Run /spec py-ai-starter-kit
+       - Verify spec is comprehensive and actionable
+
+    Patterns:
+    - .agents/research/SPEC-CREATION-PROCESS.md
+    - Use AskUserQuestion effectively
+    - Anthropic XML format
+
+    Validation:
+    - /discuss generates comprehensive decision document
+    - /spec generates valid Anthropic XML specification
+    - Spec includes all decisions from discussion
+    - Spec has session-sized implementation steps
+  </step_1_priority_1_goal_2>
+
+  <step_2_priority_1_goal_3>
+    Task: Session Management System - YAML state + /pause + /resume + /status
+    Duration: 3 sessions (~60K tokens)
+    Priority: HIGH - Foundation for multi-session
+    Timeline: Week 3-4
+
+    Files:
+    - .claude/schemas/session.yaml (new - schema definition)
+    - .claude/schemas/task.yaml (new)
+    - .claude/schemas/agents.yaml (new)
+    - .claude/skills/pause/SKILL.md (new)
+    - .claude/skills/resume/SKILL.md (new)
+    - .claude/skills/status/SKILL.md (new)
+    - .claude/skills/status/scripts/generate_report.py (new)
+    - .agents/state/ (output directory)
+
+    Actions:
+    1. Define YAML schemas:
+       - session.yaml structure (feature, phase, tokens, etc.)
+       - task-NNN.yaml structure (see data_models section)
+       - agents.yaml structure (see data_models section)
+    2. Build /pause skill:
+       - Update session.yaml (status=paused, last_updated)
+       - Run validation (ensure tests pass)
+       - Commit work if uncommitted
+       - Display resume instructions
+    3. Build /resume skill:
+       - Read session.yaml
+       - Display STATE.md summary
+       - Check git state
+       - Conditional re-prime (only if codebase changed)
+       - Read relevant artifacts based on phase
+       - Determine next action
+    4. Build /status skill:
+       - Read session.yaml, task-NNN.yaml, agents.yaml
+       - Generate STATE.md (human-readable snapshot)
+       - Helper script: generate_report.py transforms YAML to markdown
+       - Visual elements: progress bars, tables
+    5. Test workflow:
+       - Create session
+       - /pause
+       - Simulate new Claude session
+       - /resume
+       - Verify state restored correctly
+
+    Patterns:
+    - Clean YAML structure
+    - Human-readable STATE.md
+    - Efficient resume (minimal re-reading)
+
+    Validation:
+    - YAML schemas documented in .claude/schemas/
+    - /pause saves state correctly
+    - /resume restores state without errors
+    - /status generates readable STATE.md
+    - Conditional re-prime works (only when needed)
+  </step_2_priority_1_goal_3>
+
+  <step_3_priority_1_goal_4>
+    Task: Multi-Session Architecture - Phase-based execution + token tracking
+    Duration: 2 sessions (~40K tokens)
+    Priority: HIGH - Uses session management foundation
+    Timeline: Week 4-5
+
+    Files:
+    - .claude/skills/execute/SKILL.md (modify)
+    - .claude/skills/plan/SKILL.md (modify to add phase organization)
+    - .agents/state/session.yaml (add token tracking fields)
+
+    Actions:
+    1. Update /plan to organize tasks by phase:
+       - Phase 1: Data models
+       - Phase 2: Services
+       - Phase 3: API endpoints
+       - Phase 4: Integration tests
+       - Each phase target: 20-40K tokens
+    2. Update /execute to run one phase at a time:
+       - Process only tasks in current phase
+       - Stop at phase boundary
+       - Update session.yaml: phase_complete
+       - Next session continues with next phase
+    3. Add token tracking:
+       - Track usage continuously during /execute
+       - Warn at 75% (150K): "Consider checkpointing soon"
+       - Critical at 88% (175K): Automatic checkpoint procedure
+       - Display token budget bar in /status
+    4. Implement session breaks:
+       - Natural break points: after /prime, /discuss, /plan, each phase, /validate
+       - Each break updates session.yaml
+    5. Test on multi-phase feature:
+       - Create 3-phase plan
+       - Execute Phase 1 in session 1
+       - /pause
+       - Resume in session 2, execute Phase 2
+       - /pause
+       - Resume in session 3, execute Phase 3
+       - Verify: fresh 50K context each phase, no token exhaustion
+
+    Patterns:
+    - Fresh context per phase
+    - Predictable token usage
+    - Clear phase boundaries
+
+    Validation:
+    - /plan creates phase-organized tasks
+    - /execute runs one phase at a time
+    - Token warnings display correctly
+    - Session breaks work seamlessly
+    - Test feature completes across 3 sessions without issues
+  </step_3_priority_1_goal_4>
+
+  <step_4_priority_1_goal_5>
+    Task: Comprehensive Skills Tree - Complete all 24 skills + compound skills
+    Duration: 4 sessions (~80K tokens)
+    Priority: MEDIUM - Polish after core workflow works
+    Timeline: Week 5-6
+
+    Files:
+    - .claude/skills/{skill-name}/SKILL.md (complete all)
+    - .claude/skills/{skill-name}/scripts/*.py (where needed)
+    - Documentation for each skill
+
+    Actions:
+    1. Complete atomic skills (verify all exist and work):
+       - /prime ✓ (step 0)
+       - /discuss ✓ (step 1)
+       - /spec ✓ (step 1)
+       - /plan ✓ (step 3)
+       - /execute ✓ (step 3)
+       - /validate (enhance with full test suite)
+       - /status ✓ (step 2)
+       - /pause ✓ (step 2)
+       - /resume ✓ (step 2)
+       - /commit (already exists, verify)
+       - /code-review (already exists, verify)
+       - /code-review-since (already exists, verify)
+       - /rca (already exists, verify)
+       - /implement-fix (already exists, verify)
+       - /task-create (new)
+       - /task-list (new)
+       - /task-update (new)
+       - /task-complete (new)
+    2. Build task management skills:
+       - CRUD operations on task-NNN.yaml files
+       - Validation (no circular dependencies)
+       - Helper: parse and update YAML
+    3. Build compound skills (optional Priority 2):
+       - /quick-fix: prime → rca → implement-fix → validate → commit
+       - /feature-full: prime → discuss → spec → plan → execute → validate → commit
+       - /refactor-safe: prime → validate (baseline) → plan → implement → validate → commit
+    4. Document skill coordination:
+       - Which skills call which skills
+       - Data flow between skills
+       - State transitions
+    5. Test skill tree:
+       - Run full PIV workflow start to finish
+       - Verify all skills work together
+       - Check for missing features
+
+    Patterns:
+    - Co-located helper scripts (scripts/ subdirectory)
+    - Consistent SKILL.md structure
+    - Clear purpose, actions, validation
+
+    Validation:
+    - All 24 atomic skills documented and functional
+    - Skills coordinate via shared YAML state
+    - Full PIV workflow runs end-to-end
+    - No broken skill references
+  </step_4_priority_1_goal_5>
+
+  <step_5_basic_caching_instrumentation>
+    Task: Basic Caching + Token Instrumentation (embedded in Priority 1)
+    Duration: 1 session (~15K tokens)
+    Priority: MEDIUM - Optimization enhancement
+    Timeline: Week 1 (parallel with Prime optimization)
+
+    Files:
+    - .agents/analytics/token-metrics.json (new)
+    - .claude/skills/*/SKILL.md (add token tracking)
+    - scripts/measure_tokens.py (helper for instrumentation)
+
+    Actions:
+    1. Implement basic prompt caching:
+       - Cache CLAUDE.md (static, high reuse)
+       - Cache reference docs when read
+       - Use Anthropic prompt caching API
+       - 1-hour TTL for static content
+    2. Add comprehensive token instrumentation:
+       - Track tokens per skill invocation
+       - Track tokens per session
+       - Track cache hits/misses
+       - Track cost calculations (tokens → dollars)
+       - Save to .agents/analytics/token-metrics.json
+    3. Display metrics in /status:
+       - Tokens used this session
+       - Cache hit rate
+       - Estimated cost
+       - Tokens saved by caching
+    4. Test and measure:
+       - Run workflow with caching
+       - Run workflow without caching
+       - Compare results
+       - Verify cache effectiveness
+
+    Patterns:
+    - Anthropic prompt caching API
+    - Token cost formulas
+
+    Validation:
+    - Caching reduces token usage (measure before/after)
+    - Metrics tracked in JSON file
+    - /status displays accurate metrics
+    - Cache hit rate visible
+  </step_5_basic_caching_instrumentation>
+</implementation_steps>
+
+<testing_strategy>
+  <unit_tests>
+    Location: tests/unit/
+    Purpose: Test individual skills and helpers in isolation
+    Coverage: Helper scripts, YAML parsing, state management logic
+    Mocking: File I/O, tool calls, user input
+    Speed: < 5 seconds total
+    Command: uv run pytest tests/unit/ -v
+
+    Note: Skills themselves are harder to unit test (they're prompts).
+    Focus on testing helper Python scripts that skills invoke.
+  </unit_tests>
+
+  <integration_tests>
+    Location: tests/integration/
+    Purpose: Test complete skill workflows
+    Coverage: Prime → Discuss → Spec → Plan → Execute → Validate → Commit
+    Mocking: Minimal (real file system, mock user input)
+    Speed: 30-60 seconds
+    Command: uv run pytest tests/integration/ -v
+
+    Test workflows:
+    - Full PIV workflow on simple feature
+    - Session pause/resume across workflows
+    - Multi-phase execution
+    - Error recovery
+  </integration_tests>
+
+  <e2e_tests>
+    Location: tests/e2e/
+    Purpose: Test dogfooding - use PIV to build PIV features
+    Coverage: Build real features using the methodology
+    Mocking: None (real development workflow)
+    Speed: Hours (full feature implementation)
+    Command: Manual execution with documentation
+
+    E2E scenarios:
+    - Build /status skill using PIV workflow
+    - Build /optimize skill using PIV workflow
+    - Measure: token usage, quality, time
+  </e2e_tests>
+
+  <coverage_requirements>
+    Target: 80% minimum
+    Measurement: Branch coverage
+    Scope: Python helper scripts (SKILL.md files not measured)
+    Command: uv run pytest --cov=scripts --cov-fail-under=80
+
+    Coverage by component:
+    - Helper scripts: 90%+ (testable Python code)
+    - YAML parsing: 95%+ (critical infrastructure)
+    - State management: 90%+
+    - Skill markdown: Not measured (prompts, not code)
+  </coverage_requirements>
+
+  <tdd_enforcement>
+    Approach: Strict TDD by default
+
+    Workflow:
+    1. Write failing test first (proves test works)
+    2. Implement code to pass test
+    3. Refactor if needed (test still passes)
+    4. Single atomic commit per task
+
+    Opt-out:
+    - Requires tdd_opt_out: true in task-NNN.yaml
+    - Requires written rationale (non-empty)
+    - Requires user approval via AskUserQuestion
+    - Still requires tests and 80% coverage
+
+    Enforcement:
+    - /execute checks for test before implementation
+    - Fails task if TDD skipped without approval
+    - Validates coverage after each task
+  </tdd_enforcement>
+
+  <validation_per_task>
+    Steps (run after each task implementation):
+    1. Task verify command (specific test for this task)
+    2. Lint: uv run ruff check .
+    3. Type check: uv run mypy app/ src/
+    4. All unit tests: uv run pytest tests/unit/ -v
+    5. Coverage: 80%+ on modified files, 80%+ overall
+
+    If any check fails:
+    - Mark task failed
+    - Stop execution
+    - Report errors to user
+    - Require fix before continuing
+  </validation_per_task>
+
+  <validation_per_phase>
+    Steps (run after phase completion):
+    1. All validation_per_task checks
+    2. Integration tests: uv run pytest tests/integration/ -v
+    3. Overall coverage check: >= 80%
+
+    If integration tests fail:
+    - Mark phase failed
+    - Identify failing tests
+    - Fix before next phase
+  </validation_per_phase>
+
+  <validation_final>
+    Steps (run before feature completion):
+    1. All tests: unit + integration + e2e
+    2. Coverage: >= 80% overall, >= 80% per new file
+    3. Quality: lint + type check
+    4. Acceptance criteria: All met (from spec)
+    5. Generate validation report
+
+    Ready to commit when:
+    - All validation steps pass
+    - No blockers
+    - All acceptance criteria met
+    - Report shows green across the board
+  </validation_final>
+</testing_strategy>
+
+<session_management>
+  <startup_ritual>
+    Every session begins with:
+
+    1. Verify location:
+       pwd
+       ls -la
+
+    2. Load session state (if resuming):
+       cat .agents/state/session.yaml
+       cat .agents/state/STATE.md
+
+    3. Check git state:
+       git status
+       git log -5 --oneline
+       git diff --stat
+
+    4. Conditional re-prime:
+       If commits since last session OR uncommitted changes:
+         /prime --quick (~8K tokens)
+       Else:
+         Skip (trust cached context)
+
+    5. Run baseline validation:
+       uv run pytest tests/unit/ -v --tb=short
+       (Must pass before proceeding)
+
+    6. Verify nothing broken:
+       - All tests passing
+       - No unexpected modified files
+       - Correct branch
+
+    7. Load relevant context based on phase:
+       - Prime: N/A (first phase)
+       - Discuss: Read prime context report
+       - Spec: Read discussion summary
+       - Plan: Read spec
+       - Execute: Read plan and task files
+       - Validate: Read test results
+       - Commit: Read changes
+
+    8. Determine next action:
+       - Check session.yaml for current phase
+       - Identify next task or phase
+       - Proceed with workflow
+
+    Never start work without completing startup ritual.
+    Ensures consistent state and prevents confusion.
+  </startup_ritual>
+
+  <token_budgeting>
+    Budget: 200K tokens per conversation
+
+    Thresholds:
+    - 25% (50K): Log: "Token budget: 50K used (25%)"
+    - 50% (100K): Log: "Token budget: 100K used (50%), halfway"
+    - 75% (150K): **WARNING**: "Token budget: 150K used (75%) - Consider checkpointing soon"
+      → Suggest: Complete current task, then checkpoint
+    - 88% (175K): **CRITICAL**: "Token budget: 175K used (88%) - CHECKPOINT NOW"
+      → Action: Automatic checkpoint procedure
+
+    Target per session: 20-40K tokens
+    Target per phase: 30-50K tokens
+    Target per task: 5-15K tokens
+
+    If approaching 75%:
+    - Complete current task
+    - Run validation
+    - Commit work
+    - Run /pause
+    - Display resume instructions
+
+    Never exceed 88% without checkpointing.
+  </token_budgeting>
+
+  <checkpoint_procedure>
+    Triggered at 88% token usage OR user request
+
+    Steps:
+    1. Complete current task (if in progress)
+    2. Run validation (ensure nothing broken)
+    3. Commit work:
+       git add relevant-files
+       git commit -m "WIP: Checkpoint at [phase] [task]
+
+       Completed: [list]
+       In progress: [current]
+       Remaining: [list]
+
+       Token checkpoint at [N]K tokens."
+    4. Update session.yaml:
+       - Set status: paused
+       - Record tokens_used
+       - Record last_updated
+    5. Generate /status report (STATE.md)
+    6. Display resume instructions:
+       ```
+       ═══════════════════════════════════════════════════
+       SESSION CHECKPOINT
+       ═══════════════════════════════════════════════════
+
+       Completed: [Phase X, Tasks Y-Z]
+       Token usage: [N]K
+       Tests: All passing
+
+       TO RESUME (New conversation):
+       1. cd /home/jhall/Projects/py-ai-starter-kit
+       2. /resume
+       3. Continue with: [Next task]
+
+       ═══════════════════════════════════════════════════
+       ```
+    7. End session gracefully (do not start new major tasks)
+  </checkpoint_procedure>
+
+  <progress_tracking>
+    After each task completion:
+    1. Update task-NNN.yaml:
+       - status: completed
+       - completed_at: timestamp
+       - tokens_actual: measured
+       - test_results: {passed, failed, skipped}
+    2. Update session.yaml:
+       - tokens_used: cumulative
+       - current_task: next task or null
+    3. Commit work (atomic commit per task)
+    4. Generate /status if user requests
+
+    Tracked metrics:
+    - Tasks completed per session
+    - Tokens per task (estimated vs actual)
+    - Test pass rate
+    - Time per session (if possible)
+    - Blockers encountered
+  </progress_tracking>
+
+  <multi_session_workflow>
+    Typical feature timeline (5-7 sessions):
+
+    Session 1: Prime + Discuss (15-20K tokens)
+    - /prime (context establishment)
+    - /discuss (design decisions)
+    - /pause
+
+    Session 2: Spec + Plan (20-25K tokens)
+    - /resume
+    - /spec (formal specification)
+    - /plan (task breakdown)
+    - /pause
+
+    Session 3: Execute Phase 1 (40-50K tokens)
+    - /resume
+    - /execute (implement Phase 1 tasks)
+    - /pause
+
+    Session 4: Execute Phase 2 (40-50K tokens)
+    - /resume
+    - /execute (implement Phase 2 tasks)
+    - /pause
+
+    Session 5: Execute Phase 3 (40-50K tokens)
+    - /resume
+    - /execute (implement Phase 3 tasks)
+    - /pause
+
+    Session 6: Validate + Commit (15-20K tokens)
+    - /resume
+    - /validate (final quality gates)
+    - /commit (semantic commit)
+    - Done!
+
+    Total: ~200-235K tokens across 6 sessions
+    Fresh context each session via state files
+  </multi_session_workflow>
+</session_management>
+
+<success_criteria>
+  Priority 1 complete when:
+  - /prime optimized (<10K normal, <50K deep) ✓
+  - /discuss and /spec workflows functional ✓
+  - Session management (YAML state, pause/resume/status) working ✓
+  - Multi-session architecture (phase-based execution) proven ✓
+  - All 24 atomic skills documented and functional ✓
+  - Basic caching + instrumentation implemented ✓
+  - Dogfooding: Build one feature using full PIV workflow successfully
+
+  Project overall complete when:
+  - All 21 goals addressed (Priority 1-4 implemented, deferred documented)
+  - Dogfooding on 3+ real features successful
+  - Documentation complete (CLAUDE.md, reference docs, skill docs)
+  - 80%+ test coverage on helper scripts
+  - Company adoption started (2-3 developers using)
+  - Open-source ready (clean up, public repo, contribution guide)
+</success_criteria>
+
+<constraints>
+  <code_standards>
+    - Line length: 100 characters max (enforced by ruff)
+    - File length: 500 lines max (refactor if larger)
+    - Function length: 100 lines max
+    - Type hints: Required on all functions and class attributes
+    - Docstrings: Required for public functions (Google style)
+    - Naming:
+      - snake_case for variables and functions
+      - PascalCase for classes
+      - UPPER_SNAKE_CASE for constants
+      - _leading_underscore for private members
+  </code_standards>
+
+  <quality_gates>
+    - Linting: ruff check must pass (zero errors)
+    - Type checking: mypy must pass (strict mode)
+    - Tests: All tests must pass (unit + integration)
+    - Coverage: >= 80% overall, >= 80% per new file
+    - Git: Atomic commits per task, semantic commit messages
+    - TDD: Tests first by default, opt-out requires approval
+  </quality_gates>
+
+  <architecture_decisions>
+    - Swarm-lite: Manual multi-session coordination (no auto-spawning in Priority 1)
+    - State format: YAML for machines, markdown for humans
+    - Skill pattern: Co-located helper scripts in skills/*/scripts/
+    - Token efficiency: Skip heavy docs, load on-demand
+    - Autonomy: Two levels (Interactive L1 default, Auto L3 optional)
+  </architecture_decisions>
+
+  <deferred_features>
+    Not in Priority 1:
+    - Automatic agent spawning (Priority 2-3)
+    - Historical feature tracking (deferred via YAGNI)
+    - Multi-language support (add when needed)
+    - Advanced context optimization (Priority 4)
+    - Multi-provider abstraction (deferred to 2027+)
+  </deferred_features>
+</constraints>
+
+<gotchas>
+  <token_management>
+    Issue: /prime can easily use 40-50K tokens if not careful
+    Impact: Exhausts budget before implementation starts
+    Solution: Shallow discovery - locate files don't read them
+    Prevention: Use --files-with-matches, skip reference docs, sample don't exhaust
+  </token_management>
+
+  <state_consistency>
+    Issue: Multiple sessions updating same YAML files can conflict
+    Impact: State gets out of sync, sessions clobber each other
+    Solution: Task ownership via owner field, file locks (future)
+    Prevention: One active executor per task, orchestrator coordinates
+  </state_consistency>
+
+  <tdd_shortcuts>
+    Issue: AI may want to skip tests to go faster
+    Impact: Low test coverage, brittle code
+    Solution: Strict TDD enforcement with user approval for opt-outs
+    Prevention: Make opt-out harder than following TDD, track metrics
+  </tdd_shortcuts>
+
+  <yaml_parsing>
+    Issue: YAML syntax errors break state management
+    Impact: Can't read session state, workflows fail
+    Solution: Schema validation, parse errors caught gracefully
+    Prevention: Use yamllint, validate on write, provide clear error messages
+  </yaml_parsing>
+
+  <git_discipline>
+    Issue: Uncommitted work lost between sessions
+    Impact: Progress disappears, need to redo work
+    Solution: Automatic commits per task, checkpoint commits on pause
+    Prevention: Validation before pause, never end session with uncommitted code
+  </git_discipline>
+
+  <skill_invocation>
+    Issue: Skills with disable-model-invocation: true can't be called via Skill tool
+    Impact: Need to execute skill logic manually in discussion
+    Solution: Either remove flag or implement logic directly
+    Prevention: Understand skill invocation patterns, test skill calls
+  </skill_invocation>
+
+  <context_rot>
+    Issue: Long conversations degrade quality as context fills
+    Impact: Mistakes increase, instructions forgotten
+    Solution: Multi-session by design, fresh context per phase
+    Prevention: Phase breaks, token warnings, automatic checkpointing
+  </context_rot>
+</gotchas>
+
+<priority_roadmap>
+  <priority_1_q1_2026>
+    Goals (5):
+    1. Prime Optimization (Week 1-2)
+    2. Spec Creation Process (Week 2-3)
+    3. Session Management (Week 3-4)
+    4. Multi-Session Architecture (Week 4-5)
+    5. Skills Tree (Week 5-6)
+
+    Deliverables:
+    - Efficient /prime (<10K tokens)
+    - Working /discuss → /spec → /plan → /execute workflow
+    - YAML state management with pause/resume
+    - Phase-based execution proven on dogfooding
+    - All 24 atomic skills functional
+    - Basic caching + instrumentation
+
+    Timeline: 6 weeks
+    Total tokens estimated: ~270K across all implementation sessions
+  </priority_1_q1_2026>
+
+  <priority_2_q2_2026>
+    Goals (3 active):
+    7. TDD Culture (Training + Enforcement + Metrics)
+    9. Profiling & Optimization System (/optimize skill with helpers)
+    Goal #6 deferred (YAGNI)
+
+    Deliverables:
+    - .claude/reference/tdd-best-practices.md
+    - TDD metrics tracking
+    - /optimize skill with profile_cpu.py, profile_memory.py, etc.
+    - Performance report generation
+
+    Timeline: 4-6 weeks after Priority 1 complete
+  </priority_2_q2_2026>
+
+  <priority_3_q3_2026>
+    Goals (1 active, 3 deferred):
+    12. Configurable Autonomy (Interactive L1 + Auto L3)
+    Goal #10 deferred (YAGNI - add languages when needed)
+    Goal #11 deferred (formalize after dogfooding)
+    Goal #13 deferred (templates in Priority 4)
+
+    Deliverables:
+    - .agents/config/autonomy.yaml
+    - Two autonomy modes working
+
+    Timeline: 2-3 weeks
+  </priority_3_q3_2026>
+
+  <priority_4_q4_2026>
+    Goals (3 active):
+    14. Smart Context Management (caching, layered loading)
+    15. Cost Tracking & Optimization (dashboards, budgets)
+    16. Linear Integration (sync tickets, auto-update)
+
+    Goals deferred (6):
+    17-21: Pattern library, analytics, onboarding, multi-provider, advanced context
+
+    Deliverables:
+    - Advanced caching implementation
+    - Cost tracking dashboard
+    - Linear API integration
+
+    Timeline: 6-8 weeks
+  </priority_4_q4_2026>
+
+  <deferred_2027_plus>
+    Goals (6):
+    17. Cross-Project Pattern Library
+    18. Feedback Loop Analytics
+    19. Developer Onboarding System
+    20. Multi-Provider Abstraction
+    21. Advanced Context Optimization (merged with #14)
+
+    Rationale:
+    - Focus on core workflow first (Priority 1-3)
+    - Add advanced features after methodology proven
+    - Reevaluate based on actual needs in 2027
+    - Some may not be needed (YAGNI validation)
+  </deferred_2027_plus>
+</priority_roadmap>
+
+<architectural_decisions_summary>
+  Decision #1: Open-source toolkit, validated with company first
+  Decision #2: Independent from GSD, borrow philosophies
+  Decision #3: PIV is target workflow (not manual workarounds)
+  Decision #4: /prime token efficiency is critical blocker
+  Decision #5: Two prime modes (normal 8-10K, deep 40-50K)
+  Decision #6: Keep all 21 goals (validate on massive projects)
+  Decision #7: YAML state + /status markdown reports
+  Decision #8: Strict TDD, opt-out requires written justification + user approval
+  Decision #9: Swarm-lite (build state now, automate later)
+  Decision #10: Prime normal: read structure+docs+git+samples, skip heavy docs
+  Decision #11: Prime deep: for orchestrators, specs, first time, refactoring
+  Decision #12: Token warnings at 75% (150K), critical at 88% (175K)
+  Decision #13: Basic caching (CLAUDE.md, reference docs) + full instrumentation
+  Decision #14: Multi-session by design, breaks between phases
+  Decision #15: Resume with conditional re-prime (only if codebase changed)
+  Decision #16: Execute one phase at a time (50K fresh context)
+  Decision #17: Validate after each task (comprehensive checks)
+  Decision #18: Integration/E2E tests after each phase
+  Decision #19: Coverage hybrid (new code 80%+, overall 80%+)
+  Decision #20: TDD workflow: test-first, single atomic commit per task
+  Decision #21: Per-task validation: verify + lint + type + all unit tests
+  Decision #22: Integration tests at phase boundaries
+  Decision #23: TDD opt-out requires user approval
+  Decision #24: Priority 1 order: Prime → Spec → Session → Multi-session → Skills
+  Decision #25: Goal #6 deferred (YAGNI - session tracking sufficient)
+  Decision #26: Goal #7 TDD culture (training + enforcement + metrics)
+  Decision #27: Goal #9 profiling with co-located Python helper scripts
+  Decision #28: Goal #10 language standards (YAGNI - add when needed)
+  Decision #29: Goal #11 ownership (defer formalization)
+  Decision #30: Goal #12 autonomy (Interactive L1 + Auto L3)
+  Decision #31: Goal #13 templates (defer to Priority 4)
+  Decision #32: Goals #14-15 (context + cost) in Priority 4
+  Decision #33: Goal #16 Linear integration in Priority 4
+  Decision #34: Goals #17-18-19 (patterns + analytics + onboarding) deferred
+  Decision #35: Goals #20-21 (providers + advanced context) deferred to 2027+
+</architectural_decisions_summary>
+
+</project_specification>

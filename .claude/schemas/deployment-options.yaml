@@ -1,0 +1,208 @@
+# Deployment Strategy Decision Schema
+# Used by /discuss and /explore for deployment architecture decisions
+
+deployment_target:
+  aws_lambda:
+    use_when:
+      - "Serverless architecture preferred"
+      - "Variable/unpredictable traffic"
+      - "Pay-per-use pricing desired"
+      - "AWS ecosystem already in use"
+    pros:
+      - "Zero server management"
+      - "Automatic scaling"
+      - "Pay only for execution time"
+      - "High availability built-in"
+    cons:
+      - "Cold start latency (500ms-2s)"
+      - "15 minute execution limit"
+      - "Stateless by design"
+      - "Debugging can be harder"
+    tools:
+      - "AWS SAM or CDK for deployment"
+      - "Mangum for FastAPI on Lambda"
+      - "Lambda layers for dependencies"
+    default_when: "serverless OR variable_traffic"
+
+  aws_ecs_fargate:
+    use_when:
+      - "Containerized applications"
+      - "Long-running processes"
+      - "Need more than 15min execution"
+      - "Consistent traffic"
+    pros:
+      - "No EC2 management"
+      - "Container-based (familiar Docker)"
+      - "No time limits"
+      - "Can run background workers"
+    cons:
+      - "More expensive than Lambda for low traffic"
+      - "Manual scaling configuration"
+      - "Higher minimum cost"
+    tools:
+      - "Docker"
+      - "AWS ECS/Fargate"
+      - "Application Load Balancer"
+    default_when: "containers OR long_running"
+
+  kubernetes:
+    use_when:
+      - "Multi-cloud or cloud-agnostic"
+      - "Complex microservices architecture"
+      - "Team experienced with K8s"
+      - "Need fine-grained control"
+    pros:
+      - "Cloud-agnostic"
+      - "Powerful orchestration"
+      - "Rich ecosystem"
+      - "Self-healing and auto-scaling"
+    cons:
+      - "Steep learning curve"
+      - "Operational complexity"
+      - "Overkill for simple applications"
+    tools:
+      - "EKS (AWS), GKE (Google), AKS (Azure)"
+      - "Helm for package management"
+      - "Istio for service mesh (optional)"
+    default_when: "multi_cloud OR complex_microservices"
+
+  traditional_vms:
+    use_when:
+      - "Legacy applications"
+      - "Specific OS requirements"
+      - "Team unfamiliar with containers"
+    pros:
+      - "Full control"
+      - "Familiar to traditional ops teams"
+    cons:
+      - "Manual scaling"
+      - "Higher maintenance"
+      - "Slower deployments"
+    default_when: "legacy OR team_preference"
+
+ci_cd_pipeline:
+  github_actions:
+    use_when:
+      - "GitHub repository"
+      - "Simple to medium complexity"
+      - "Want integrated CI/CD"
+    stages:
+      - "Lint and format (ruff)"
+      - "Type checking (mypy)"
+      - "Run tests (pytest)"
+      - "Build artifacts"
+      - "Deploy to environment"
+
+  gitlab_ci:
+    use_when:
+      - "GitLab repository"
+      - "Self-hosted GitLab"
+    stages: "Similar to GitHub Actions"
+
+  aws_codepipeline:
+    use_when:
+      - "AWS-native deployment"
+      - "Integration with AWS services"
+    stages:
+      - "CodeBuild for build"
+      - "CodeDeploy for deployment"
+
+environment_strategy:
+  environments:
+    development:
+      purpose: "Local development"
+      deployment: "Docker Compose or local Python"
+      database: "SQLite or local PostgreSQL"
+      testing: "Unit + integration tests"
+
+    staging:
+      purpose: "Pre-production testing"
+      deployment: "Same as production (mirrors prod)"
+      database: "PostgreSQL with test data"
+      testing: "Full test suite + e2e tests"
+
+    production:
+      purpose: "Live application"
+      deployment: "Production infrastructure"
+      database: "PostgreSQL with backups"
+      monitoring: "Full observability stack"
+
+  promotion_strategy:
+    flow: "dev → staging → production"
+    gates:
+      - "All tests passing"
+      - "Code review approved"
+      - "Security scan passed"
+      - "Manual approval for production"
+
+infrastructure_as_code:
+  aws_cdk:
+    use_when:
+      - "AWS infrastructure"
+      - "Prefer TypeScript or Python for IaC"
+      - "Want type safety"
+    pros:
+      - "Type-safe"
+      - "Use familiar language"
+      - "Good abstraction"
+
+  terraform:
+    use_when:
+      - "Multi-cloud"
+      - "Team experienced with HCL"
+      - "Want declarative syntax"
+    pros:
+      - "Cloud-agnostic"
+      - "Large ecosystem"
+      - "State management"
+
+  cloudformation:
+    use_when:
+      - "AWS-only"
+      - "Simple infrastructure"
+    pros:
+      - "Native AWS support"
+      - "No external tools"
+
+monitoring_observability:
+  logging:
+    tools: "CloudWatch Logs, Datadog, Elasticsearch"
+    structure: "JSON structured logging with request IDs"
+
+  metrics:
+    tools: "CloudWatch Metrics, Prometheus, Datadog"
+    track:
+      - "Request rate and latency"
+      - "Error rate"
+      - "Database query performance"
+      - "External API call duration"
+
+  tracing:
+    tools: "AWS X-Ray, Jaeger, Datadog APM"
+    use_for: "Distributed request tracing across services"
+
+  alerting:
+    tools: "CloudWatch Alarms, PagerDuty, Opsgenie"
+    alert_on:
+      - "Error rate > threshold"
+      - "Latency > threshold"
+      - "Service health checks failing"
+
+# Smart defaults
+always_include:
+  - "Health check endpoint (/health)"
+  - "Graceful shutdown handling"
+  - "Environment-based configuration"
+  - "Secrets management (not in code)"
+  - "Request ID tracking"
+  - "Structured logging"
+  - "Error tracking (Sentry or similar)"
+
+# Never do these
+never_do:
+  - "Hardcode secrets or credentials"
+  - "Skip health checks"
+  - "Deploy directly to production without staging"
+  - "Skip automated tests in CI/CD"
+  - "Use root user for application"
+  - "Expose debug endpoints in production"

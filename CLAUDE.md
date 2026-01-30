@@ -23,26 +23,51 @@ Avoid building functionality on speculation. Implement features only when they a
 
 ---
 
-## 🔄 Development Methodology: PIV Loop
+## ⏱️ Timeline & Estimation Policy
 
-This project follows the **Prime → Implement → Validate** (PIV) methodology for systematic, high-quality development.
+**CRITICAL: Never make timeline assumptions or predictions.**
 
-### Quick Reference
+AI-assisted development moves at different speeds than traditional development. Timelines biased toward human-only development lead to unnecessary deferrals and poor prioritization decisions.
 
-```
-PRIME (Context) → IMPLEMENT (Execution) → VALIDATE (Quality) → Feedback Loop
-```
+### Rules
 
-**Core Commands:**
-- `/prime` - Establish codebase context before planning
-- `/plan-feature {name}` - Create comprehensive feature plan
-- `/implement-plan {plan-file}` - Execute plan with validation
-- `/validate` - Multi-stage quality gates
-- `/commit` - Semantic commit workflow
+**❌ NEVER:**
+- Use timeline language: "Week 1-2", "This month", "Q2 2026", "30-60 minutes"
+- Make duration predictions: "This will take X days/weeks/months"
+- Frame priorities as time periods: "Priority 1 = this quarter"
+- Estimate implementation time unless explicitly asked
+- Say "defer to next quarter/year"
 
-**Philosophy:** "Context is King" - Understand before acting, validate before proceeding, learn from every implementation.
+**✅ ALWAYS:**
+- Frame as priorities: "First Priority", "Second Priority", "High/Medium/Low Priority"
+- Ask: "When do you need this?" or "What's urgent?"
+- Use "now vs later", not "this quarter vs next year"
+- Assume AI-assisted development speed (fast iteration)
+- Let user determine urgency and timeline
 
-For complete PIV Loop documentation, see [.claude/reference/piv-loop-methodology.md](.claude/reference/piv-loop-methodology.md)
+### Examples
+
+**❌ Bad:**
+- "Phase 1 will take 1-2 weeks"
+- "This is a Q2 2026 goal"
+- "Exploration completes in 30-60 minutes"
+- "Not critical for Q1, defer to 2027"
+
+**✅ Good:**
+- "Phase 1: Core abstractions (First Priority)"
+- "When do you need this capability?"
+- "Exploration scope: focused vs comprehensive"
+- "Is this high priority or can it wait?"
+
+### Rationale
+
+With AI assistance:
+- Features that seem "months away" can be days
+- "Week 1-2" estimates assume human-only development
+- Timeline bias causes artificial deferrals
+- User knows their urgency better than AI can predict
+
+**Exception:** Technical performance metrics (e.g., "API responds in 5-10 seconds") are facts, not predictions.
 
 ---
 

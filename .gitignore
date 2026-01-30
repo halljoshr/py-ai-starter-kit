@@ -1,1 +1,4 @@
 tmp/
+
+# Private documents with business-specific information
+.agents/state/private/

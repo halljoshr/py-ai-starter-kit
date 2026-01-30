@@ -1,0 +1,88 @@
+# Database Technology Decision Schema
+# Used by /discuss and /explore skills to provide smart defaults
+
+database_choice:
+  sqlite:
+    use_when:
+      - "Project is demo, example, or prototype"
+      - "Single-user or development environment"
+      - "< 5 models, < 10 endpoints"
+      - "Embedded database preferred"
+      - "No separate database server wanted"
+    pros:
+      - "Zero configuration - no server setup"
+      - "Single file database"
+      - "Perfect for development and testing"
+      - "Cross-platform"
+      - "Built into Python"
+    cons:
+      - "Not suitable for high concurrency"
+      - "Limited to ~1GB for good performance"
+      - "No built-in replication"
+      - "Single writer at a time"
+    default_when: "prototype OR demo OR example"
+
+  postgresql:
+    use_when:
+      - "Production environment"
+      - "10M+ rows expected"
+      - "Complex queries with joins"
+      - "Need ACID compliance"
+      - "Multiple concurrent writers"
+      - "Need full-text search"
+    pros:
+      - "Battle-tested and reliable"
+      - "Full ACID compliance"
+      - "Rich ecosystem and extensions"
+      - "Excellent performance at scale"
+      - "Strong JSON support"
+    cons:
+      - "Requires server management"
+      - "More complex setup than SQLite"
+      - "Higher resource requirements"
+    default_when: "production OR scale OR complex_queries"
+
+  mysql:
+    use_when:
+      - "Legacy system integration"
+      - "Simple read-heavy workloads"
+      - "Team already experienced with MySQL"
+    pros:
+      - "Wide adoption"
+      - "Good documentation"
+      - "Mature tooling"
+    cons:
+      - "Less feature-rich than PostgreSQL"
+      - "Licensing considerations (GPL)"
+    default_when: "legacy_integration OR team_preference"
+
+  dynamodb:
+    use_when:
+      - "AWS-native application"
+      - "Key-value or document store needs"
+      - "Serverless architecture"
+      - "Need automatic scaling"
+    pros:
+      - "Fully managed by AWS"
+      - "Automatic scaling"
+      - "High availability built-in"
+      - "Pay per request pricing"
+    cons:
+      - "AWS lock-in"
+      - "Limited query capabilities"
+      - "Cost can be high for large datasets"
+    default_when: "aws_serverless OR key_value_workload"
+
+# Smart defaults - apply these without asking
+always_use:
+  - "Pydantic models for data validation"
+  - "Alembic for migrations (if using SQLAlchemy)"
+  - "Connection pooling for production"
+  - "Proper indexing on foreign keys and frequently queried fields"
+
+# Never do these
+never_do:
+  - "Store sensitive data without encryption"
+  - "Use string concatenation for queries (SQL injection risk)"
+  - "Skip migrations - always version database schema"
+  - "Use blocking I/O in async applications"

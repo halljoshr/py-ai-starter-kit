@@ -1,0 +1,153 @@
+# Architecture Pattern Decision Schema
+# Used by /discuss and /explore for high-level design decisions
+
+service_architecture:
+  monolith:
+    use_when:
+      - "Early stage / MVP"
+      - "Small team (< 5 developers)"
+      - "Shared domain logic"
+      - "Simple deployment preferred"
+    pros:
+      - "Simpler to develop and test"
+      - "Easier to refactor across boundaries"
+      - "Single deployment"
+      - "Lower operational overhead"
+    cons:
+      - "Harder to scale specific parts"
+      - "Longer build/deploy times as app grows"
+      - "Can become tightly coupled"
+    default_when: "mvp OR small_team"
+
+  modular_monolith:
+    use_when:
+      - "Medium-sized application"
+      - "Want clear boundaries but not microservices overhead"
+      - "Team growing (5-20 developers)"
+    pros:
+      - "Clear module boundaries"
+      - "Still single deployment"
+      - "Can extract to microservices later if needed"
+      - "Easier testing than full microservices"
+    cons:
+      - "Requires discipline to maintain boundaries"
+      - "Still shares database (usually)"
+    default_when: "medium_complexity OR future_microservices_possible"
+
+  microservices:
+    use_when:
+      - "Large team (20+ developers)"
+      - "Independent scaling requirements"
+      - "Different technology stacks needed"
+      - "Team organized by domains"
+    pros:
+      - "Independent deployment and scaling"
+      - "Technology diversity"
+      - "Fault isolation"
+    cons:
+      - "Distributed system complexity"
+      - "Network latency and failures"
+      - "Harder to test end-to-end"
+      - "Operational overhead (monitoring, tracing, etc.)"
+    default_when: "large_team OR independent_scaling_required"
+
+layered_architecture:
+  api_layer:
+    location: "app/api/"
+    responsibility: "HTTP request/response handling"
+    contains:
+      - "Route handlers"
+      - "Request validation (Pydantic)"
+      - "Response formatting"
+      - "HTTP-specific logic (status codes, headers)"
+    never_contains:
+      - "Business logic"
+      - "Database queries"
+      - "External API calls"
+
+  service_layer:
+    location: "app/services/"
+    responsibility: "Business logic and orchestration"
+    contains:
+      - "Business rules"
+      - "Orchestration of multiple operations"
+      - "Transaction management"
+      - "Validation beyond simple type checking"
+    never_contains:
+      - "HTTP-specific code"
+      - "Direct database queries (use repositories)"
+
+  repository_layer:
+    location: "app/repositories/"
+    responsibility: "Data access abstraction"
+    contains:
+      - "Database queries"
+      - "CRUD operations"
+      - "Query builders"
+      - "Data mapping (ORM↔Domain models)"
+    never_contains:
+      - "Business logic"
+      - "HTTP handling"
+
+  model_layer:
+    location: "app/models/"
+    responsibility: "Data structures and validation"
+    contains:
+      - "Pydantic models (API schemas)"
+      - "ORM models (database)"
+      - "Domain models (business entities)"
+      - "Enums and constants"
+    types:
+      api_schemas: "Pydantic models for API request/response"
+      db_models: "SQLAlchemy models for database"
+      domain_models: "Business logic entities (optional, for complex domains)"
+
+dependency_flow:
+  rule: "API → Service → Repository → Database"
+  never_allow:
+    - "API calling Repository directly (skip Service layer)"
+    - "Service containing HTTP-specific code"
+    - "Repository containing business logic"
+
+state_management:
+  stateless_preferred:
+    use: "Store state in database or cache, not in-memory"
+    reason: "Enables horizontal scaling, graceful restarts"
+
+  when_stateful_ok:
+    - "WebSocket connections (keep connection state)"
+    - "Background jobs (worker state)"
+    - "Cache (explicit caching layer like Redis)"
+
+data_flow_patterns:
+  request_response:
+    use_when: "Synchronous operations, immediate response"
+    example: "REST APIs, GraphQL queries"
+
+  event_driven:
+    use_when: "Asynchronous operations, eventual consistency"
+    example: "Background jobs, webhooks, message queues"
+    tools: "Celery, RQ, AWS SQS, Kafka"
+
+  streaming:
+    use_when: "Real-time data, large datasets"
+    example: "WebSockets, Server-Sent Events, gRPC streaming"
+
+# Smart defaults
+always_apply:
+  - "Use dependency injection (FastAPI Depends() pattern)"
+  - "Separate API models from DB models (avoid tight coupling)"
+  - "Use repositories for database access (don't query from services directly)"
+  - "Keep services stateless (use database/cache for state)"
+  - "Use environment variables for configuration"
+  - "Implement health check endpoints"
+  - "Use structured logging with request IDs"
+
+# Anti-patterns to avoid
+never_do:
+  - "Mix business logic into API route handlers"
+  - "Skip service layer and call repository from API"
+  - "Store state in global variables"
+  - "Use circular dependencies (A imports B, B imports A)"
+  - "Build God objects (classes that do everything)"
+  - "Skip abstractions for 'simplicity' then regret later"

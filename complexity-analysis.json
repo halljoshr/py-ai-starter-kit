@@ -1,0 +1,119 @@
+{
+  "total_files": 2,
+  "high_severity_files": 0,
+  "medium_severity_files": 0,
+  "ok_files": 2,
+  "skipped_files": 0,
+  "files": [
+    {
+      "file": ".claude/skills/validate/scripts/check_coverage.py",
+      "total_lines": 179,
+      "num_functions": 4,
+      "num_imports": 4,
+      "functions": [
+        {
+          "name": "parse_coverage_report",
+          "start_line": 25,
+          "end_line": 84,
+          "length": 60,
+          "complexity": 6,
+          "severity": "ok",
+          "message": null
+        },
+        {
+          "name": "format_missing_lines",
+          "start_line": 87,
+          "end_line": 116,
+          "length": 30,
+          "complexity": 6,
+          "severity": "ok",
+          "message": null
+        },
+        {
+          "name": "print_coverage_report",
+          "start_line": 119,
+          "end_line": 156,
+          "length": 38,
+          "complexity": 5,
+          "severity": "ok",
+          "message": null
+        },
+        {
+          "name": "main",
+          "start_line": 159,
+          "end_line": 175,
+          "length": 17,
+          "complexity": 2,
+          "severity": "ok",
+          "message": null
+        }
+      ],
+      "warnings": [],
+      "severity": "ok"
+    },
+    {
+      "file": ".claude/skills/code-review/scripts/analyze_complexity.py",
+      "total_lines": 268,
+      "num_functions": 6,
+      "num_imports": 5,
+      "functions": [
+        {
+          "name": "calculate_cyclomatic_complexity",
+          "start_line": 25,
+          "end_line": 44,
+          "length": 20,
+          "complexity": 5,
+          "severity": "ok",
+          "message": null
+        },
+        {
+          "name": "analyze_function",
+          "start_line": 47,
+          "end_line": 80,
+          "length": 34,
+          "complexity": 5,
+          "severity": "ok",
+          "message": null
+        },
+        {
+          "name": "analyze_file",
+          "start_line": 83,
+          "end_line": 148,
+          "length": 66,
+          "complexity": 10,
+          "severity": "ok",
+          "message": null
+        },
+        {
+          "name": "analyze_codebase",
+          "start_line": 151,
+          "end_line": 187,
+          "length": 37,
+          "complexity": 5,
+          "severity": "ok",
+          "message": null
+        },
+        {
+          "name": "print_summary",
+          "start_line": 190,
+          "end_line": 225,
+          "length": 36,
+          "complexity": 8,
+          "severity": "ok",
+          "message": null
+        },
+        {
+          "name": "main",
+          "start_line": 228,
+          "end_line": 264,
+          "length": 37,
+          "complexity": 6,
+          "severity": "ok",
+          "message": null
+        }
+      ],
+      "warnings": [],
+      "severity": "ok"
+    }
+  ]
+}

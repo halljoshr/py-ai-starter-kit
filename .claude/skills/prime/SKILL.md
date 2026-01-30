@@ -17,6 +17,8 @@ The Prime command establishes a complete understanding of the codebase, its patt
 
 **Philosophy:** "Context is King" - Understanding the system prevents assumptions, reduces errors, and accelerates development.
 
+**Approach:** Shallow discovery, not deep reading. Build a map of WHERE things are, not WHAT they contain. Read specific files only when planning/implementation requires them.
+
 ---
 
 ## When to Use Prime
@@ -54,30 +56,58 @@ git ls-files | rg "\.(py|md|json|yaml|toml)$" | sed 's/.*\.//' | sort | uniq -c 
 
 ### Step 2: Read Core Documentation
 
+**IMPORTANT:** Read ONLY these files. DO NOT read referenced documentation in `.claude/reference/` or `.claude/skills/` - those load on-demand when needed.
+
 Priority order:
-1. CLAUDE.md - Development standards and conventions
+1. CLAUDE.md - Development standards and conventions (note reference files, don't read them)
 2. README.md - Project overview and setup
-3. .claude/PIV-LOOP.md - Development methodology
-4. pyproject.toml - Dependencies and configuration
-5. .env.example - Required environment variables
+3. pyproject.toml - Dependencies and configuration
+4. .env.example - Required environment variables
+
+**Explicitly SKIP:**
+- `.claude/reference/**/*.md` - Reference docs (load on-demand)
+- `.claude/skills/**/*.md` - Skill files (load on-invocation)
+- `docs/**` - Full documentation (reference when needed)
 
 ### Step 3: Identify Key Files
 
-**Entry Points:**
+**Entry Points (locate, don't read yet):**
 ```bash
 rg "if __name__ == .__main__.:" --files-with-matches
 rg "FastAPI\(" --files-with-matches
 ```
 
-**Data Models:**
+**Data Models (locate only):**
 ```bash
 rg "class.*BaseModel" --files-with-matches -g "*.py"
 ```
 
-**Services:**
+**Services (locate only):**
 ```bash
 ls -la app/services/ src/services/ 2>/dev/null
 ```
+
+### Step 3.5: Sample Code Patterns (Read 1-2 examples)
+
+**Read ONE entry point example (if exists):**
+```bash
+# Read the main application file to understand patterns
+rg "FastAPI\(|if __name__" --files-with-matches -g "*.py" | head -1
+```
+
+**Read ONE service example (if services exist):**
+```bash
+# Read one service to see dependency injection, error handling patterns
+ls app/services/*.py src/services/*.py 2>/dev/null | head -1
+```
+
+**Read ONE test example (if tests exist):**
+```bash
+# Read one test to understand testing patterns
+find tests/unit -name "test_*.py" -type f 2>/dev/null | head -1
+```
+
+**Purpose:** Understand patterns in action without reading entire codebase. CLAUDE.md tells you conventions; these examples show them applied.
 
 ### Step 4: Understand Current State
 
@@ -89,11 +119,20 @@ git log -10 --oneline --decorate
 
 ### Step 5: Map Architecture
 
-- FastAPI routers
-- Dependency injection patterns
-- Pydantic validators
-- Data flow
-- External integrations
+**Use search patterns, NOT full file reads:**
+
+```bash
+# Find routers (don't read them yet)
+rg "APIRouter|@app\.(get|post|put|delete)" --files-with-matches -g "*.py"
+
+# Find Pydantic models (don't read them yet)
+rg "class.*\(BaseModel\)" --files-with-matches -g "*.py"
+
+# Find services (list only)
+ls app/services/ src/services/ 2>/dev/null || echo "No services directory"
+```
+
+**Goal:** Build a mental map of WHERE things are, not WHAT they contain. Read specific files only when planning requires it.
 
 ### Step 6: Review Recent Plans
 
@@ -117,17 +156,19 @@ Generate a comprehensive context report saved to:
 
 Before completing Prime, verify:
 
-- [ ] Read CLAUDE.md completely
+- [ ] Read CLAUDE.md fully (note reference docs for later, don't read them now)
 - [ ] Read README.md
-- [ ] Analyzed directory structure
-- [ ] Identified key files (entry points, models, services)
+- [ ] Read pyproject.toml
+- [ ] Analyzed directory structure (using ls/find)
+- [ ] Located key files using search patterns (--files-with-matches)
+- [ ] Read 1-2 example files (entry point, service, or test) to see patterns
 - [ ] Reviewed recent commits (last 10)
 - [ ] Checked current branch and status
-- [ ] Mapped architecture patterns
-- [ ] Understood testing structure
-- [ ] Reviewed recent plans (if any)
-- [ ] Extracted naming conventions
-- [ ] Generated context report
+- [ ] Mapped architecture patterns (file locations + sampled examples)
+- [ ] Understood testing structure (directory layout + one test example)
+- [ ] Listed recent plans (if any exist)
+- [ ] Extracted naming conventions from CLAUDE.md
+- [ ] Generated context report with "read more" pointers
 - [ ] Saved report to `.agents/init-context/`
 
 ---
@@ -136,10 +177,11 @@ Before completing Prime, verify:
 
 A successful Prime produces a context report that:
 
-- **Comprehensive** - Covers all major aspects of the codebase
-- **Actionable** - Provides specific file references and line numbers
+- **Comprehensive** - Covers structure, conventions, and key patterns
+- **Actionable** - Provides specific file references for deeper reading when needed
 - **Current** - Reflects the actual state of the code
 - **Scannable** - Easy to reference during planning/implementation
+- **Balanced** - Enough context to start planning, not everything upfront
 - **Preserved** - Saved for future reference and onboarding
 
-**Result:** You understand the codebase well enough to plan features that align with existing patterns and conventions.
+**Result:** You understand the codebase well enough to plan features that align with existing patterns. For complex features, you know which reference docs to read for deeper context.

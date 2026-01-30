@@ -2,6 +2,12 @@
 
 1. Building out a full tests first deployment that helps the feature builds and know what tests need passed before it can commit/finish feature.
 2. A better prime function that is more effiecent with our token usage. Right now on large codebases this can be pretty rough.
+3. Another skill that I want is an analyze our coding conversation so that we can improve the flow for the next time. If I am repeating this or situation continue to pop up we should change the way we do stuff. Learn from our mistakes and get better.
+4. Also we should have a build-agent skill that takes the input data, output data, and a set of instructions and goals and it should just build it the same everytime.
+
+
+**Detailed Feedback:**
+- [Discuss & Spec Improvements (2026-01-28)](.agents/feedback/discuss-spec-improvements-2026-01-28.md) - 10 improvements from first dogfooding session, includes /explore skill requirements
 
 
 
