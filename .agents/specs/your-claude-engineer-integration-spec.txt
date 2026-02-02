@@ -1,0 +1,926 @@
+<feature_specification>
+  <metadata>
+    <feature_name>Your Claude Engineer Pattern Integration</feature_name>
+    <feature_id>yce-integration-001</feature_id>
+    <created_date>2026-02-02</created_date>
+    <priority>high</priority>
+    <estimated_effort>large</estimated_effort>
+    <target_completion>Month 1-2</target_completion>
+  </metadata>
+
+  <overview>
+    <summary>
+      Integrate proven patterns from Your Claude Engineer (github.com/coleam00/your-claude-engineer)
+      into py-ai-starter-kit to achieve 30-40% cost reduction, fix token tracking bugs, enforce
+      quality gates, and improve session context preservation.
+    </summary>
+
+    <business_value>
+      - 30-40% cost reduction through multi-model optimization (Haiku for planning, Sonnet for coding)
+      - Fix critical token tracking bug causing user confusion across sessions
+      - Enforce quality gates to prevent regressions
+      - Improve multi-session workflow with rich context preservation
+      - Maintain simplicity and offline capability advantages
+    </business_value>
+
+    <scope>
+      IN SCOPE:
+      - Multi-model cost optimization (Haiku/Sonnet selection per skill)
+      - Token tracking fix (separate current session vs feature total)
+      - Session history with summaries, decisions, blockers
+      - Quality gates enforcement in task execution
+      - Per-model token usage tracking and cost reporting
+
+      OUT OF SCOPE:
+      - External state backends (Linear, GitHub Issues)
+      - Multi-agent orchestration system
+      - Playwright visual validation (can add later)
+      - Real-time collaboration features
+    </scope>
+  </overview>
+
+  <requirements>
+    <functional_requirements>
+      <requirement id="FR-001" priority="critical">
+        <description>Multi-Model Skill Execution</description>
+        <details>
+          Skills must support model selection (haiku/sonnet/opus) via YAML frontmatter.
+          Default assignments:
+          - Haiku: prime, discuss, plan, validate, pause, resume, status, task-*
+          - Sonnet: implement-plan, code-review, rca, implement-fix, execution-report
+
+          Skills should spawn the specified model when executed, with token usage tracked separately.
+        </details>
+        <acceptance_criteria>
+          - Skill YAML can specify model: haiku|sonnet|opus
+          - Skill executor reads model field and uses correct model
+          - Default model is sonnet if not specified (backward compatibility)
+          - All 24 existing skills have model field assigned appropriately
+        </acceptance_criteria>
+      </requirement>
+
+      <requirement id="FR-002" priority="critical">
+        <description>Separate Token Tracking</description>
+        <details>
+          session.yaml must track two separate token counts:
+          - current_session_tokens: Resets to 0 on each new conversation
+          - feature_total_tokens: Accumulates across all sessions
+
+          Display format on resume:
+          "Feature Total: 93K tokens ($0.28 across 2 sessions)
+           Current Session: 0 / 200K (0%)"
+        </details>
+        <acceptance_criteria>
+          - session.yaml has current_session_tokens and feature_total_tokens fields
+          - New session resets current_session_tokens to 0
+          - feature_total_tokens accumulates from all sessions
+          - Resume display shows both counts clearly
+          - Users understand they have fresh 200K budget
+        </acceptance_criteria>
+      </requirement>
+
+      <requirement id="FR-003" priority="high">
+        <description>Session History Array</description>
+        <details>
+          session.yaml must have session_history array storing:
+          - session number
+          - start/end timestamps
+          - tokens_used (per session)
+          - tasks_completed
+          - summary (user-provided on pause)
+          - decisions made
+          - blockers encountered
+        </details>
+        <acceptance_criteria>
+          - session.yaml has session_history array
+          - Each session creates new history entry
+          - /pause prompts for summary, decisions, blockers
+          - /resume-session displays last session summary
+          - History preserved across sessions
+        </acceptance_criteria>
+      </requirement>
+
+      <requirement id="FR-004" priority="high">
+        <description>Per-Model Token Tracking</description>
+        <details>
+          Track token usage separately by model for cost analysis:
+          - haiku_tokens_used
+          - sonnet_tokens_used
+          - opus_tokens_used (if used)
+
+          Calculate actual cost:
+          - Haiku: $0.25 per 1M input, $1.25 per 1M output
+          - Sonnet: $3 per 1M input, $15 per 1M output
+          - Opus: $15 per 1M input, $75 per 1M output
+        </details>
+        <acceptance_criteria>
+          - session.yaml tracks tokens per model
+          - Cost calculated based on model pricing
+          - /status displays per-model breakdown
+          - Cost savings shown vs. all-Sonnet baseline
+        </acceptance_criteria>
+      </requirement>
+
+      <requirement id="FR-005" priority="high">
+        <description>Quality Gates in Task YAML</description>
+        <details>
+          Extend task YAML schema to support quality gates:
+
+          gates:
+            pre_implementation:
+              required: true
+              commands: [pytest tests/unit/ -v]
+              failure_action: block
+
+            post_implementation:
+              required: true
+              skills: [validate]
+              failure_action: block
+
+            completion_verification:
+              required: false
+              commands: [pytest tests/integration/ -v]
+              failure_action: warn
+        </details>
+        <acceptance_criteria>
+          - Task YAML schema supports gates section
+          - /execute enforces required gates
+          - Block vs. warn action respected
+          - Gate results tracked in task file
+          - Users cannot skip required gates
+        </acceptance_criteria>
+      </requirement>
+
+      <requirement id="FR-006" priority="medium">
+        <description>Auto-Resume in Execute</description>
+        <details>
+          /execute should auto-detect paused sessions and resume automatically:
+
+          1. Check if session.yaml exists
+          2. If status == "paused", auto-resume
+          3. Display session summary
+          4. Initialize current_session_tokens = 0
+          5. Increment session_number
+          6. Continue from next_task
+
+          Users should not need to run /resume-session explicitly.
+        </details>
+        <acceptance_criteria>
+          - /execute detects paused sessions
+          - Auto-resumes without manual /resume-session
+          - Displays "🔄 Resuming session for feature: X"
+          - current_session_tokens resets to 0
+          - Works seamlessly across conversations
+        </acceptance_criteria>
+      </requirement>
+
+      <requirement id="FR-007" priority="medium">
+        <description>Auto-Checkpoint on Recommendations</description>
+        <details>
+          When task completion reaches a checkpoint_recommendation:
+
+          1. Display checkpoint message
+          2. Prompt: "Checkpoint reached. Continue or pause? (c/p)"
+          3. If pause: run /pause automatically
+          4. If continue: proceed but warn about token usage
+
+          Also auto-checkpoint at 175K current_session_tokens (88% of 200K).
+        </details>
+        <acceptance_criteria>
+          - Checkpoint recommendations detected
+          - User prompted to continue or pause
+          - Auto-pause at 88% current session tokens
+          - Checkpoint reason logged in session_history
+          - Works across all phases
+        </acceptance_criteria>
+      </requirement>
+
+      <requirement id="FR-008" priority="low">
+        <description>Session State Migration</description>
+        <details>
+          Provide migration script for old session.yaml files:
+
+          Old format:
+            tokens_used: 93000
+
+          New format:
+            current_session_tokens: 0
+            feature_total_tokens: 93000
+            session_history: [...]
+
+          Script should detect old format and migrate automatically.
+        </details>
+        <acceptance_criteria>
+          - Migration script: .agents/scripts/migrate_session_yaml.py
+          - Detects old format automatically
+          - Converts to new format correctly
+          - Preserves all existing data
+          - Logs migration actions
+        </acceptance_criteria>
+      </requirement>
+    </functional_requirements>
+
+    <non_functional_requirements>
+      <requirement id="NFR-001">
+        <description>Backward Compatibility</description>
+        <details>
+          Existing skills must work without modification. If model field not specified,
+          default to sonnet. Old session.yaml files should trigger migration warning.
+        </details>
+      </requirement>
+
+      <requirement id="NFR-002">
+        <description>Performance</description>
+        <details>
+          Model switching should add &lt;100ms overhead. Token tracking should not
+          impact skill execution speed. Session file reads/writes should be fast (&lt;50ms).
+        </details>
+      </requirement>
+
+      <requirement id="NFR-003">
+        <description>Documentation</description>
+        <details>
+          All new features must be documented:
+          - CLAUDE.md updated with model selection guidance
+          - README.md updated with cost optimization section
+          - CHANGELOG.md with breaking changes noted
+          - Reference doc: .claude/reference/multi-model-optimization.md
+        </details>
+      </requirement>
+
+      <requirement id="NFR-004">
+        <description>Testing</description>
+        <details>
+          Comprehensive test coverage:
+          - Unit tests for token tracking logic
+          - Integration tests for multi-session workflow
+          - E2E test: 3-session feature development
+          - Measure actual cost savings on real feature
+        </details>
+      </requirement>
+    </non_functional_requirements>
+  </requirements>
+
+  <technical_architecture>
+    <components>
+      <component name="Skill Model Selection">
+        <description>
+          Skills specify model in YAML frontmatter. Skill executor reads this and
+          spawns the appropriate model when running the skill.
+        </description>
+        <files>
+          <file>.claude/skills/*/SKILL.md</file>
+          <file>.claude/core/skill_executor.py (new)</file>
+        </files>
+      </component>
+
+      <component name="Session State Management">
+        <description>
+          Enhanced session.yaml with separate token tracking, session history,
+          and per-model usage. Supports multi-session workflows natively.
+        </description>
+        <files>
+          <file>.agents/state/session.yaml</file>
+          <file>.agents/schemas/session-v2.yaml</file>
+          <file>.agents/scripts/session_manager.py (new)</file>
+        </files>
+      </component>
+
+      <component name="Quality Gates">
+        <description>
+          Task YAML extended with gates section. Execute skill enforces gates
+          and blocks on failures.
+        </description>
+        <files>
+          <file>.agents/tasks/task-*.yaml</file>
+          <file>.agents/schemas/task-v2.yaml</file>
+          <file>.claude/skills/execute/SKILL.md</file>
+        </files>
+      </component>
+
+      <component name="Token Tracking & Cost Analysis">
+        <description>
+          Per-model token tracking with cost calculation. Display in /status
+          and saved to session.yaml.
+        </description>
+        <files>
+          <file>.agents/state/session.yaml</file>
+          <file>.claude/skills/status/SKILL.md</file>
+          <file>.agents/analytics/token-usage.json</file>
+        </files>
+      </component>
+    </components>
+
+    <data_models>
+      <model name="Session YAML v2">
+        <schema>
+session:
+  feature: string
+  phase: string
+  status: active|paused|completed
+  created_at: timestamp
+  last_updated: timestamp
+
+  # Current session tracking (resets each conversation)
+  current_session_number: int
+  current_session_tokens: int
+  current_session_budget: 200000
+  current_session_started: timestamp
+
+  # Feature-level tracking (accumulates)
+  feature_total_tokens: int
+  feature_total_cost_usd: float
+
+  # Per-model tracking
+  tokens_by_model:
+    haiku: int
+    sonnet: int
+    opus: int
+  cost_by_model:
+    haiku: float
+    sonnet: float
+    opus: float
+
+  # Session history
+  session_history:
+    - session: int
+      started: timestamp
+      ended: timestamp
+      tokens_used: int
+      tasks_completed: [task-ids]
+      summary: string
+      decisions: [strings]
+      blockers: [strings]
+
+  current_task: task-id|null
+  next_task: task-id|null
+  pause_reason: string|null
+
+plan:
+  spec_file: path
+  total_tasks: int
+  total_estimated_tokens: int
+  phases: [...]
+  checkpoint_recommendations: [...]
+
+tasks:
+  total: int
+  pending: int
+  in_progress: int
+  completed: int
+  failed: int
+  ids:
+    pending: [task-ids]
+    in_progress: [task-ids]
+    completed: [task-ids]
+    failed: [task-ids]
+        </schema>
+      </model>
+
+      <model name="Task YAML v2">
+        <schema>
+id: task-003
+name: Session Management System
+description: |
+  Implement foundational YAML state management infrastructure
+
+phase: infrastructure
+priority: high
+estimated_tokens: 60000
+depends_on:
+  blocked_by: [task-002]
+  blocks: [task-004]
+
+implementation:
+  files:
+    create: [...]
+    modify: [...]
+
+  actions:
+    - Write unit tests for session state management
+    - Implement session.yaml read/write functions
+    - Create /pause skill with summary prompt
+    - Create /resume-session skill with context display
+    - Update /status to show session history
+
+  patterns:
+    - .claude/reference/pydantic-best-practices.md
+    - .claude/reference/pytest-best-practices.md
+
+validation:
+  gates:
+    pre_implementation:
+      required: true
+      commands:
+        - uv run pytest tests/unit/ -v
+      failure_action: block
+
+    post_implementation:
+      required: true
+      skills:
+        - validate
+      failure_action: block
+
+    completion_verification:
+      required: true
+      commands:
+        - uv run pytest tests/unit/test_session_manager.py -v
+        - uv run pytest tests/integration/test_multi_session.py -v
+      failure_action: block
+
+  commands:
+    - uv run pytest tests/unit/test_session_manager.py -v
+    - uv run mypy .agents/scripts/session_manager.py
+    - uv run ruff check .agents/scripts/
+
+  skills:
+    - skill: validate
+      when: always
+
+status: pending
+owner: null
+created_at: "2026-02-02T00:00:00Z"
+started_at: null
+completed_at: null
+actual_tokens: null
+
+test_results:
+  status: null
+  last_run: null
+  command_results: []
+  skill_results: []
+  overall_passed: null
+  failure_reason: null
+        </schema>
+      </model>
+
+      <model name="Skill YAML Frontmatter v2">
+        <schema>
+---
+name: implement-plan
+description: Execute feature plan with validation
+disable-model-invocation: true
+context: fork
+model: sonnet                    # NEW: haiku|sonnet|opus
+estimated_tokens: 60000          # NEW: for planning
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill
+---
+        </schema>
+      </model>
+    </data_models>
+
+    <integration_points>
+      <integration>
+        <name>Claude Code Skill Executor</name>
+        <description>
+          Must be enhanced to read model field from skill YAML and spawn
+          the appropriate model when executing the skill.
+        </description>
+        <implementation>
+          Likely requires changes to Claude Code CLI or SDK. May need to
+          check if Claude Code supports per-skill model selection.
+
+          Fallback: Use environment variable or config file if per-skill
+          model selection not supported natively.
+        </implementation>
+      </integration>
+
+      <integration>
+        <name>Token Usage Tracking</name>
+        <description>
+          Need to capture token usage per skill execution and attribute to
+          correct model. Claude Code CLI may provide this via API response.
+        </description>
+        <implementation>
+          Check Claude Code CLI output for token usage data. If available,
+          parse and store in session.yaml. If not, estimate based on
+          response length.
+        </implementation>
+      </integration>
+    </integration_points>
+  </technical_architecture>
+
+  <implementation_phases>
+    <phase number="1" name="Multi-Model Cost Optimization">
+      <estimated_effort>2-3 weeks</estimated_effort>
+      <goals>
+        - Add model field to all 24 skills
+        - Implement skill executor changes (if possible)
+        - Track per-model token usage
+        - Measure 30-40% cost savings
+      </goals>
+
+      <tasks>
+        <task id="1.1">Research Claude Code CLI model selection capabilities</task>
+        <task id="1.2">Design skill model selection mechanism</task>
+        <task id="1.3">Add model field to skill YAML schema</task>
+        <task id="1.4">Update all 24 skills with appropriate model assignments</task>
+        <task id="1.5">Implement token tracking by model</task>
+        <task id="1.6">Test on 3 real features and measure savings</task>
+        <task id="1.7">Document in .claude/reference/multi-model-optimization.md</task>
+      </tasks>
+
+      <success_criteria>
+        - All skills have model field assigned
+        - Token usage tracked by model
+        - 30%+ cost reduction measured
+        - Documentation complete
+      </success_criteria>
+    </phase>
+
+    <phase number="2" name="Token Tracking Fix">
+      <estimated_effort>1-2 weeks</estimated_effort>
+      <goals>
+        - Fix critical token tracking bug
+        - Separate current session vs feature total
+        - Add session history array
+        - Migration for old sessions
+      </goals>
+
+      <tasks>
+        <task id="2.1">Design session.yaml v2 schema</task>
+        <task id="2.2">Implement session state manager (Python helper)</task>
+        <task id="2.3">Update /execute to reset current_session_tokens</task>
+        <task id="2.4">Update /resume-session to display both token counts</task>
+        <task id="2.5">Add session_history array structure</task>
+        <task id="2.6">Create migration script for old sessions</task>
+        <task id="2.7">Test multi-session workflow (3+ sessions)</task>
+        <task id="2.8">Update CHANGELOG.md with breaking changes</task>
+      </tasks>
+
+      <success_criteria>
+        - Current session tokens reset to 0 on resume
+        - Feature total accumulates correctly
+        - Session history preserved
+        - Migration script works
+        - User confusion eliminated
+      </success_criteria>
+    </phase>
+
+    <phase number="3" name="Quality Gates">
+      <estimated_effort>1-2 weeks</estimated_effort>
+      <goals>
+        - Add gates to task YAML schema
+        - Enforce gates in /execute
+        - Block on required gate failures
+        - Track gate results
+      </goals>
+
+      <tasks>
+        <task id="3.1">Design task YAML v2 with gates section</task>
+        <task id="3.2">Update .agents/schemas/task.yaml</task>
+        <task id="3.3">Update /execute skill to enforce gates</task>
+        <task id="3.4">Implement gate result tracking</task>
+        <task id="3.5">Test blocking behavior on gate failures</task>
+        <task id="3.6">Add gates to existing task templates</task>
+        <task id="3.7">Document gate patterns in reference docs</task>
+      </tasks>
+
+      <success_criteria>
+        - Gates defined in task YAML
+        - Required gates enforced
+        - Gate failures block progression
+        - Results tracked in task files
+      </success_criteria>
+    </phase>
+
+    <phase number="4" name="Session Context Preservation">
+      <estimated_effort>1 week</estimated_effort>
+      <goals>
+        - Add summary, decisions, blockers to history
+        - Prompt on /pause for context
+        - Display on /resume-session
+        - Test multi-session with rich context
+      </goals>
+
+      <tasks>
+        <task id="4.1">Extend session_history with summary/decisions/blockers</task>
+        <task id="4.2">Update /pause to prompt for summary</task>
+        <task id="4.3">Update /pause to prompt for decisions made</task>
+        <task id="4.4">Update /pause to prompt for blockers</task>
+        <task id="4.5">Update /resume-session to display last session context</task>
+        <task id="4.6">Test multi-session workflow with rich context</task>
+        <task id="4.7">Document session summary best practices</task>
+      </tasks>
+
+      <success_criteria>
+        - Session history includes summary/decisions/blockers
+        - /pause prompts for context
+        - /resume displays context
+        - Users report better resumption
+      </success_criteria>
+    </phase>
+
+    <phase number="5" name="Auto-Resume and Checkpointing">
+      <estimated_effort>1 week</estimated_effort>
+      <goals>
+        - /execute auto-resumes paused sessions
+        - Auto-checkpoint at recommendations
+        - Auto-checkpoint at 88% tokens
+        - Test seamless multi-session flow
+      </goals>
+
+      <tasks>
+        <task id="5.1">Update /execute with auto-resume detection</task>
+        <task id="5.2">Implement checkpoint recommendation detection</task>
+        <task id="5.3">Implement auto-checkpoint at 88% current session tokens</task>
+        <task id="5.4">Test auto-resume across conversations</task>
+        <task id="5.5">Test auto-checkpoint triggers</task>
+        <task id="5.6">Document auto-resume behavior</task>
+      </tasks>
+
+      <success_criteria>
+        - /execute auto-resumes without /resume-session
+        - Checkpoints trigger at recommendations
+        - Auto-checkpoint at 88% tokens
+        - Seamless multi-session experience
+      </success_criteria>
+    </phase>
+
+    <phase number="6" name="Documentation and Validation">
+      <estimated_effort>3-5 days</estimated_effort>
+      <goals>
+        - Update all documentation
+        - Create reference docs
+        - Test on real features
+        - Measure outcomes
+      </goals>
+
+      <tasks>
+        <task id="6.1">Update CLAUDE.md with multi-model guidance</task>
+        <task id="6.2">Update README.md with cost optimization section</task>
+        <task id="6.3">Create .claude/reference/multi-model-optimization.md</task>
+        <task id="6.4">Update CHANGELOG.md with all changes</task>
+        <task id="6.5">Test complete workflow on 2-3 real features</task>
+        <task id="6.6">Measure cost savings and quality improvements</task>
+        <task id="6.7">Create migration guide for existing users</task>
+      </tasks>
+
+      <success_criteria>
+        - All documentation updated
+        - Reference docs complete
+        - Real features tested successfully
+        - Cost savings validated (30%+)
+        - Migration guide published
+      </success_criteria>
+    </phase>
+  </implementation_phases>
+
+  <risks_and_mitigations>
+    <risk id="R-001" severity="high">
+      <description>Claude Code CLI may not support per-skill model selection</description>
+      <impact>Cannot implement multi-model optimization as designed</impact>
+      <mitigation>
+        Research Claude Code CLI capabilities first (Phase 1, Task 1.1).
+        Fallback: Use environment variables or config files to set model globally
+        per session. Users manually switch between haiku/sonnet sessions.
+      </mitigation>
+    </risk>
+
+    <risk id="R-002" severity="medium">
+      <description>Breaking changes to session.yaml may break existing workflows</description>
+      <impact>Users with active sessions cannot resume</impact>
+      <mitigation>
+        Provide migration script (Phase 2, Task 2.6).
+        Detect old format and auto-migrate with backup.
+        Document breaking changes in CHANGELOG.md.
+      </mitigation>
+    </risk>
+
+    <risk id="R-003" severity="medium">
+      <description>Token usage tracking may not be accurate</description>
+      <impact>Cost calculations incorrect, users make bad decisions</impact>
+      <mitigation>
+        Validate against actual API billing data.
+        Start with estimates, refine based on real usage.
+        Document accuracy limitations.
+      </mitigation>
+    </risk>
+
+    <risk id="R-004" severity="low">
+      <description>Quality gates may be too restrictive, frustrate users</description>
+      <impact>Users disable gates or work around them</impact>
+      <mitigation>
+        Make gates optional by default (required: false).
+        Allow users to configure strictness level.
+        Document gate patterns and when to use them.
+      </mitigation>
+    </risk>
+
+    <risk id="R-005" severity="low">
+      <description>Session context prompts may slow down workflow</description>
+      <impact>Users skip prompts, losing context benefits</impact>
+      <mitigation>
+        Make prompts quick (single field, not multi-step).
+        Pre-fill with sensible defaults.
+        Allow users to skip with --no-prompt flag.
+      </mitigation>
+    </risk>
+  </risks_and_mitigations>
+
+  <success_metrics>
+    <metric name="Cost Reduction">
+      <target>30-40% reduction in token costs vs. baseline</target>
+      <measurement>
+        Compare feature development cost before/after on 3 real features.
+        Baseline: All Sonnet execution.
+        Target: Mixed Haiku/Sonnet execution.
+      </measurement>
+    </metric>
+
+    <metric name="Token Tracking Accuracy">
+      <target>Users report no confusion about token budgets</target>
+      <measurement>
+        Survey users after multi-session workflow.
+        Question: "Do you understand your token budget across sessions?"
+        Target: 100% "yes" responses.
+      </measurement>
+    </metric>
+
+    <metric name="Quality Improvement">
+      <target>Zero regressions in features with enforced gates</target>
+      <measurement>
+        Track regression rate before/after gate enforcement.
+        Baseline: Historical regression rate.
+        Target: 0 regressions in gated features.
+      </measurement>
+    </metric>
+
+    <metric name="Session Resumption Success">
+      <target>95% of multi-session features complete successfully</target>
+      <measurement>
+        Track completion rate of features spanning 3+ sessions.
+        Baseline: Current success rate (if known).
+        Target: 95%+ completion without manual intervention.
+      </measurement>
+    </metric>
+
+    <metric name="Documentation Completeness">
+      <target>All new features documented with examples</target>
+      <measurement>
+        Checklist:
+        - CLAUDE.md updated
+        - README.md updated
+        - Reference docs created
+        - CHANGELOG.md updated
+        - Migration guide published
+        Target: 100% checklist items complete.
+      </measurement>
+    </metric>
+  </success_metrics>
+
+  <testing_strategy>
+    <unit_tests>
+      <test>test_session_manager.py - session.yaml read/write</test>
+      <test>test_token_tracking.py - per-model token accumulation</test>
+      <test>test_cost_calculation.py - cost by model pricing</test>
+      <test>test_quality_gates.py - gate enforcement logic</test>
+      <test>test_session_migration.py - old to new format conversion</test>
+    </unit_tests>
+
+    <integration_tests>
+      <test>test_multi_session_workflow.py - 3-session feature development</test>
+      <test>test_auto_resume.py - /execute auto-resumes paused session</test>
+      <test>test_checkpoint_triggers.py - auto-checkpoint at thresholds</test>
+      <test>test_model_switching.py - skills execute with correct model</test>
+      <test>test_gate_enforcement.py - gates block on failures</test>
+    </integration_tests>
+
+    <e2e_tests>
+      <test>
+        Complete feature development across 3+ sessions with:
+        - Multi-model execution (haiku/sonnet)
+        - Auto-resume between sessions
+        - Quality gates enforced
+        - Session context preserved
+        - Cost tracking accurate
+        Verify 30%+ cost savings and zero regressions.
+      </test>
+    </e2e_tests>
+
+    <manual_tests>
+      <test>User experience: Resume session, verify token display clear</test>
+      <test>User experience: /pause prompts, verify not annoying</test>
+      <test>User experience: Gate failure, verify helpful error message</test>
+      <test>Migration: Old session.yaml converts correctly</test>
+    </manual_tests>
+  </testing_strategy>
+
+  <dependencies>
+    <dependency>
+      <name>Claude Code CLI capabilities research</name>
+      <type>external</type>
+      <blocking>Phase 1 (Multi-Model Optimization)</blocking>
+      <details>
+        Need to confirm Claude Code supports per-skill model selection.
+        If not, will require alternative implementation approach.
+      </details>
+    </dependency>
+
+    <dependency>
+      <name>Token usage API data</name>
+      <type>external</type>
+      <blocking>Phase 1 (Token Tracking)</blocking>
+      <details>
+        Need to verify Claude Code provides token usage in API responses.
+        If not, will require estimation approach.
+      </details>
+    </dependency>
+
+    <dependency>
+      <name>Existing session state files</name>
+      <type>internal</type>
+      <blocking>Phase 2 (Token Tracking Fix)</blocking>
+      <details>
+        Must handle migration of existing session.yaml files.
+        Migration script must not lose data.
+      </details>
+    </dependency>
+  </dependencies>
+
+  <open_questions>
+    <question id="Q-001">
+      <question>Does Claude Code CLI support per-skill model selection natively?</question>
+      <impact>Critical for Phase 1 implementation approach</impact>
+      <answer_needed_by>Before starting Phase 1</answer_needed_by>
+    </question>
+
+    <question id="Q-002">
+      <question>How does Claude Code provide token usage data to skills?</question>
+      <impact>Determines token tracking implementation</impact>
+      <answer_needed_by>Before starting Phase 1, Task 1.5</answer_needed_by>
+    </question>
+
+    <question id="Q-003">
+      <question>Should quality gates be opt-in or opt-out by default?</question>
+      <impact>User experience and adoption</impact>
+      <answer_needed_by>Before starting Phase 3</answer_needed_by>
+    </question>
+
+    <question id="Q-004">
+      <question>What level of session context is most valuable? (summary only vs. full decisions/blockers)</question>
+      <impact>Complexity vs. value of Phase 4</impact>
+      <answer_needed_by>Before starting Phase 4</answer_needed_by>
+    </question>
+
+    <question id="Q-005">
+      <question>Should we support Linear backend as optional external state?</question>
+      <impact>Determines if Phase 5 (External State) is needed</impact>
+      <answer_needed_by>After Phase 4 completion, based on user feedback</answer_needed_by>
+    </question>
+  </open_questions>
+
+  <rollout_plan>
+    <stage name="Internal Testing">
+      <duration>1 week</duration>
+      <participants>Core maintainers</participants>
+      <activities>
+        - Test all phases on 3 internal features
+        - Validate cost savings
+        - Test migration scripts
+        - Gather initial feedback
+      </activities>
+    </stage>
+
+    <stage name="Beta Release">
+      <duration>2 weeks</duration>
+      <participants>Early adopters (5-10 users)</participants>
+      <activities>
+        - Release beta branch
+        - Provide migration guide
+        - Collect user feedback
+        - Fix critical bugs
+        - Refine documentation
+      </activities>
+    </stage>
+
+    <stage name="General Availability">
+      <duration>Ongoing</duration>
+      <participants>All users</participants>
+      <activities>
+        - Merge to main branch
+        - Announce in README
+        - Update CHANGELOG
+        - Monitor adoption
+        - Provide support
+      </activities>
+    </stage>
+  </rollout_plan>
+
+  <maintenance_plan>
+    <ongoing_tasks>
+      <task>Monitor cost savings metrics monthly</task>
+      <task>Track gate effectiveness (regressions prevented)</task>
+      <task>Refine model assignments based on usage data</task>
+      <task>Update pricing if Anthropic changes rates</task>
+      <task>Collect user feedback on session context quality</task>
+    </ongoing_tasks>
+
+    <improvement_opportunities>
+      <opportunity>Add Opus model for complex reasoning tasks</opportunity>
+      <opportunity>Implement automatic model selection based on task complexity</opportunity>
+      <opportunity>Add visual validation (Playwright) from Your Claude Engineer</opportunity>
+      <opportunity>Explore external state backends (Linear, GitHub Issues) if collaboration needed</opportunity>
+    </improvement_opportunities>
+  </maintenance_plan>
+</feature_specification>
