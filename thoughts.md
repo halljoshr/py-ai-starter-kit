@@ -33,3 +33,13 @@
 - Make sure we have an auditable log of data that gets sent to agents and is received from them. So we can recreate scenarios.
 - Make sure GH Actions do not take an hour to run simple tests.
 - Make sure that we have self deployment techniques and have them logged in the SOPs
+
+
+# Added after orginal critque
+- I want to stop having to say this all of the time when getting coverage correct for pytest. This should be in a skill or something. This one too. "please do not run the full test suite just look at the coverage on a file by file basis when you change one and see how many lines you moved from miss to hit."
+- My response to vague is that it depends on each skill how much we have to code and what language we are not restricted to python we can use rust, go, or cpp if necessary to test things. Whatever is best for what we are doing. As long as it fits in our ecosystem.
+- Just watched someone use hooks as a way to run code like type check etc after claude thinks it is done but in reality it is not done. So we could do something like this where it would start the server make sure there are no errors then run the ruff and mypy and pytest etc from this sort of setup.
+- I am really talking about mermaid as our diagram stuff
+- If you go to far away from where I want and I cannot get you back on track in one prompt we should revert the code base and drop that exprot of the conversation into one of the super powerful deepthink models to try and find a better way to get it to go in our direction.
+- What is the standard claude planning mode? Is what we are building objectively better?
+- I think we are gettin to dependent on claude as well we forgot about the maker model as well. We want to use multiple models and get them voting on a system. So how do we do that effectively with creating code?
