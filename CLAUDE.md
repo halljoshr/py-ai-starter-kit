@@ -4,6 +4,32 @@ This file provides comprehensive guidance to Claude Code when working with Pytho
 
 ---
 
+## 🚨 Session Start Protocol
+
+**BEFORE accepting any feature request, ask:**
+
+1. **"Should we use the PIV-Swarm workflow for this?"**
+   - If YES (new feature, module, refactor >100 lines): Recommend `/prime → /discuss → /spec → /plan → /execute`
+   - If NO (bug fix, docs, tiny change): Proceed directly
+
+2. **Has context been established?**
+   - If this is first message: "Let me run `/prime` to understand the codebase first."
+   - If context unclear: "Should we `/discuss` this feature before implementing?"
+
+3. **Are requirements clear?**
+   - If user says "build X": Ask clarifying questions BEFORE coding
+   - If scope seems large: "This seems complex. Should we create a spec first?"
+
+**Remember:** 5 minutes of planning saves 30 minutes of refactoring. User explicitly wants to avoid:
+- Scope creep (adding features mid-implementation)
+- Refactoring due to unclear requirements
+- Lost design decisions
+- Wasted tokens on rework
+
+See `.claude/SESSION-START-CHECKLIST.md` for full workflow.
+
+---
+
 ## Core Development Philosophy
 
 ### KISS (Keep It Simple, Stupid)

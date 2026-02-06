@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Semantic commit workflow with proper message formatting and Co-Authored-By attribution.
+description: Semantic commit workflow with proper message formatting.
 disable-model-invocation: true
 allowed-tools: Bash(git:*)
 ---
@@ -13,7 +13,7 @@ allowed-tools: Bash(git:*)
 
 ## Purpose
 
-Create well-formatted git commits following semantic conventions with proper attribution.
+Create well-formatted git commits following semantic conventions. AI is a tool that assists you - the developer retains full authorship and responsibility for all code changes.
 
 ---
 
@@ -63,7 +63,7 @@ git commit -m "$(cat <<'EOF'
 
 <body>
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+<footer>
 EOF
 )"
 ```
@@ -72,11 +72,12 @@ EOF
 
 ## Rules
 
-- **NEVER** include "claude code" or "written by claude code" in messages
-- **ALWAYS** add Co-Authored-By footer
+- **NEVER** include "claude code", "AI-generated", "written by claude code", or any AI attribution in messages
+- **NEVER** add Co-Authored-By footer for AI - the developer is the sole author
 - **ALWAYS** use specific file staging (not `git add -A`)
 - **NEVER** commit secrets or credentials
 - **NEVER** skip pre-commit hooks unless explicitly requested
+- **REMEMBER**: AI is a tool like an IDE or linter - it assists but does not author code
 
 ---
 
@@ -91,8 +92,6 @@ feat(webhooks): add signature validation for HubSpot webhooks
 - Include comprehensive test coverage
 
 Refs PRO-123
-
-Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
 ```

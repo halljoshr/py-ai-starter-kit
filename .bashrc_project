@@ -1,0 +1,34 @@
+#!/bin/bash
+# Alternative to .envrc if you don't want direnv
+# Source this manually: source .bashrc_project
+# Or add to ~/.bashrc:
+#   if [ -f ~/Projects/py-ai-starter-kit/.bashrc_project ]; then
+#     source ~/Projects/py-ai-starter-kit/.bashrc_project
+#   fi
+
+export PIV_SWARM_PROJECT=1
+
+# Alias for quick access to checklist
+alias piv-checklist='cat .claude/SESSION-START-CHECKLIST.md'
+alias piv='cat .claude/SESSION-START-CHECKLIST.md'
+
+# Function to remind you of workflow
+piv-start() {
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  🚀 Starting PIV-Swarm Workflow"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo "Step 1: What are you building?"
+    read -p "Feature name: " feature_name
+    echo ""
+    echo "Opening Claude Code with reminder..."
+    echo ""
+    echo "RUN: /prime"
+    echo "THEN: /discuss $feature_name"
+    echo ""
+    claude
+}
+
+echo "PIV-Swarm aliases loaded:"
+echo "  - piv              : Show workflow checklist"
+echo "  - piv-start        : Interactive workflow starter"

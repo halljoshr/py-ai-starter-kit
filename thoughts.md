@@ -43,3 +43,14 @@
 - If you go to far away from where I want and I cannot get you back on track in one prompt we should revert the code base and drop that exprot of the conversation into one of the super powerful deepthink models to try and find a better way to get it to go in our direction.
 - What is the standard claude planning mode? Is what we are building objectively better?
 - I think we are gettin to dependent on claude as well we forgot about the maker model as well. We want to use multiple models and get them voting on a system. So how do we do that effectively with creating code?
+
+Project where we look at building a HubSpot module in Python to see if we can send in a deal ID or pre-screen ID any kind of ID to get the HubSpot deals or businesses. I want it to be a module that I can plug and play into any of the future tools that we build for this workflow.Okay, can you set the default time to five minutes and then can you test this using Honcho and make sure that we test it with the deal that already has the personal tax and business tax?DI
+
+
+
+
+
+
+What would it take for us to turn this into a desktop UI of some sort so the non-technical people could also use this tool?
+
+Can we refactor this so that it actually looks like a good Python project following all the rules that we would if you were building this from scratch? Look at our PIV model for that.
