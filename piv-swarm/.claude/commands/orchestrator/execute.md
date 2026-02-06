@@ -189,22 +189,24 @@ tasks:
 - [ ] task-005: Add integration tests (blocked)
 ```
 
-### Step 14: Check Token Budget
+### Step 14: Check Context Budget
 
 ```yaml
-# Check tokens used
-tokens:
-  used: 12000
-  budget: 200000
+# Check context used this session
+context:
+  used: 12000      # This session only
+  capacity: 200000 # Fresh each session
 ```
 
 **If under 75% (150K):** Continue to next task
 **If over 75%:** Warn and suggest checkpoint
 **If over 88% (175K):** Force checkpoint (see Step 15)
 
+**Note:** Context resets each session. Checkpointing saves *state*, not context.
+
 ### Step 15: Checkpoint (if needed)
 
-If token budget exceeded or session ending:
+If context budget exceeded or session ending:
 
 1. Update all state files
 2. Commit any pending changes
@@ -232,7 +234,7 @@ The session will continue from task-004.
 
 Repeat Steps 3-15 until:
 - All tasks completed, OR
-- Token budget exceeded, OR
+- Context budget exceeded, OR
 - Blocker encountered
 
 ---
@@ -277,7 +279,7 @@ After all tasks or checkpoint:
 
 Session complete when:
 - [ ] All tasks completed, OR
-- [ ] Token budget exceeded (checkpoint created), OR
+- [ ] Context budget exceeded (checkpoint created), OR
 - [ ] Unresolved blocker (user intervention needed)
 
 ---
@@ -292,11 +294,15 @@ After checkpoint:
 
 ---
 
-## Token Budget
+## Context Budget
 
-**Per task:** 10-30K tokens (varies by complexity)
-**Session total:** 150K soft limit, 175K hard limit
-**Checkpoint:** Automatic at 175K
+**Per task:** ~10-30K context (varies by complexity)
+**Session capacity:** ~200K (fresh each session)
+**Soft limit:** 150K (warn and suggest checkpoint)
+**Hard limit:** 175K (force checkpoint)
+
+**Key insight:** Context resets with each new session. We checkpoint to save *progress state*,
+not to preserve tokens. Resume in a fresh session with full context capacity.
 
 ---
 

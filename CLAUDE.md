@@ -268,6 +268,38 @@ Read these documents when working on specific areas:
 
 ---
 
+## 🧠 Context Budget (Not Token Budget)
+
+**Important distinction:** The PIV-Swarm system manages *context budget*, not *token budget*.
+
+| Term | What It Implies | Reality |
+|------|-----------------|---------|
+| **Token budget** | Tracking API tokens spent (billing) | ❌ Not what we track |
+| **Context budget** | Managing context window capacity | ✅ What we actually manage |
+
+### How It Works
+
+- Each Claude Code session gets a **fresh ~200K context window**
+- Context doesn't accumulate across sessions - it **resets** with each new session
+- The pause/resume system captures **state** so work can continue, not tokens
+- When skills reference "context_used", this tracks consumption within the current session
+
+### Why This Matters
+
+```
+Session 1: Uses 80K context → /pause → state saved
+Session 2: Starts fresh with 200K → /resume → loads state (minimal context)
+```
+
+The checkpoint system exists to:
+1. Save progress before hitting context limits
+2. Allow work to continue in fresh sessions
+3. Preserve decisions and task status (not token counts)
+
+**Bottom line:** Think "context window management" not "token accounting."
+
+---
+
 ## 🔍 Search Command Requirements
 
 **CRITICAL**: Always use `rg` (ripgrep) instead of traditional `grep` and `find` commands:

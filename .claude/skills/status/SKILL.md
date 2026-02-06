@@ -1,6 +1,6 @@
 ---
 name: status
-description: Display current PIV session state including tasks, agents, and token budget.
+description: Display current PIV session state including tasks, agents, and context budget.
 allowed-tools: Read
 ---
 
@@ -34,11 +34,14 @@ Read:
 | Status | {status} |
 | Started | {timestamp} |
 
-## Token Budget
+## Context Budget
 
 Used:     45K / 200K [████████░░░░░░░░░░░░░░░░░░░░░░] 22%
 Warning:  150K (75%)
 Critical: 175K (88%)
+
+Note: This tracks context window usage for THIS session only.
+Each new session starts fresh with full ~200K capacity.
 
 ## Agents
 

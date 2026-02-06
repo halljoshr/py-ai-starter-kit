@@ -72,8 +72,11 @@ The session will continue from where you left off.
 1. **Session Info** - Feature, phase, timestamps
 2. **Task Status** - All task states and progress
 3. **Decisions** - All discuss phase decisions
-4. **Token Usage** - Running totals by phase
+4. **Progress Metrics** - Tasks completed, phases finished
 5. **History** - Event log
+
+**Note:** Context doesn't carry over between sessions - each session starts fresh.
+We save *state* (what was done) not *context* (conversation history).
 
 ---
 

@@ -40,6 +40,31 @@ The PIV Loop is a three-phase iterative development cycle that emphasizes:
 
 ---
 
+## Context Budget (Not Token Budget)
+
+**Important clarification:** PIV manages *context budget*, not *token budget*.
+
+| Term | What It Implies | Reality |
+|------|-----------------|---------|
+| **Token budget** | Tracking API tokens spent (billing) | ❌ Not what we track |
+| **Context budget** | Managing context window capacity | ✅ What we actually manage |
+
+### Key Points
+
+- Each Claude Code session gets a **fresh ~200K context window**
+- Context **resets** with each new session (doesn't accumulate)
+- The pause/resume system saves **state** (task progress, decisions), not tokens
+- Checkpoint when context runs low to continue in a fresh session
+
+```
+Session 1: Uses 150K context → /pause → state saved to .agents/
+Session 2: Starts fresh 200K → /resume → loads state (minimal context)
+```
+
+Think "context window management" not "token accounting."
+
+---
+
 ## Phase 1: PRIME (Context Establishment)
 
 **Command:** `/prime` or `.claude/commands/core_piv_loop/prime.md`

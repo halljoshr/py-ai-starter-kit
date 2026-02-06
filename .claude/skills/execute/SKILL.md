@@ -320,26 +320,28 @@ tokens:
 - [ ] task-006: ... (blocked by task-004)
 ```
 
-### Step 16: Check Token Budget
+### Step 16: Check Context Budget
 
-Calculate tokens used this session:
-- Read from session.yaml: `tokens.used`
-- Add estimated tokens for this task
+Estimate context used this session:
+- Track approximate context consumption
+- Each task adds to the current session's context
 
 **Decision:**
 - < 150K (75%): Continue to next task (Step 2)
 - 150-175K (75-88%): ⚠️ Warning, suggest checkpoint after current task
 - > 175K (88%): 🚨 Checkpoint required, run `/pause`
 
+**Note:** Context resets with each new session. Checkpointing saves *state*, not tokens.
+
 ### Step 17: Loop or Complete
 
 **Continue if:**
-- Tokens < 150K AND
+- Context < 150K AND
 - Tasks remaining AND
 - No unresolved blockers
 
 **Checkpoint if:**
-- Tokens >= 150K OR
+- Context >= 150K OR
 - User requests it
 
 **Complete if:**
@@ -350,7 +352,7 @@ Calculate tokens used this session:
 
 ## Checkpoint Process
 
-When token budget exceeded:
+When context budget exceeded:
 
 1. Display checkpoint summary
 2. Update all state files
@@ -421,7 +423,7 @@ If no tasks are available (all blocked):
 
 Execution session complete when:
 - [ ] All tasks completed with `test_results.status: pass`, OR
-- [ ] Token budget exceeded (checkpoint created), OR
+- [ ] Context budget exceeded (checkpoint created), OR
 - [ ] Unresolved blocker encountered
 
 ---

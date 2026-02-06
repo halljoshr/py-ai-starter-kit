@@ -286,8 +286,8 @@ feature: user-authentication
 phase: implementation
 started: 2026-01-26T10:00:00Z
 current_task: task-002
-token_estimate: 45000
-tokens_used: 12000
+context_estimate: 45000    # Estimated context for this session
+context_used: 12000        # Context consumed this session (resets each session)
 ```
 
 ### agents.yaml
