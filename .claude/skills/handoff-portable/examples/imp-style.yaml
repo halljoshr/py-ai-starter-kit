@@ -1,0 +1,46 @@
+# Example .handoff.yaml that matches the Imp project structure
+# Use this to migrate from the Imp-specific handoff skill
+
+mode: structured
+
+files:
+  state: HANDOFF.md
+  memory: .claude/memory/MEMORY.md
+  logs: conversation-logs/
+
+sections:
+  state:
+    - last_updated
+    - last_phase_completed
+    - current_phase
+    - next_task
+    - what_has_been_decided
+    - what_has_not_been_decided
+
+  memory:
+    - current_phase
+    - conversation_log
+    - key_design_decisions
+    - research_still_needed
+
+logs:
+  numbering: sequential
+  pattern: "{number:03d}-{slug}.md"
+  template:
+    - summary
+    - key_decisions
+    - what_was_built_researched
+    - next_steps
+    - full_transcript
+
+project:
+  name: Imp
+  type: software
+
+limits:
+  memory_lines: 200
+  session_length: 5000
+
+# Imp-specific: don't add AI attribution
+conventions:
+  no_ai_attribution: true

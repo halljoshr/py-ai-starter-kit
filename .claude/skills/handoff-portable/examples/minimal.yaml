@@ -1,0 +1,20 @@
+# Example .handoff.yaml for minimal tracking
+# Perfect for small projects, experiments, or personal work
+
+profile: minimal
+
+# Or use explicit config:
+mode: minimal
+
+files:
+  logs: .sessions/
+
+logs:
+  numbering: date
+  pattern: "{date}-session.md"
+  template:
+    - summary
+    - next
+
+project:
+  name: My Project

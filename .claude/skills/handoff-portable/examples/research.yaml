@@ -1,0 +1,47 @@
+# Example .handoff.yaml for research projects
+# Optimized for exploration, note-taking, and iterative discovery
+
+profile: research
+
+# Or use explicit config:
+mode: structured
+
+files:
+  state: STATUS.md
+  memory: RESEARCH-NOTES.md
+  logs: sessions/
+  extra:
+    - REFERENCES.md
+    - HYPOTHESES.md
+
+sections:
+  state:
+    - current_focus
+    - recent_findings
+    - next_questions
+    - blocked_by
+
+  memory:
+    - session_log
+    - insights
+    - key_references
+    - methodology_notes
+
+logs:
+  numbering: date
+  pattern: "{date}-{slug}.md"
+  template:
+    - summary
+    - research_questions
+    - findings
+    - insights
+    - references
+    - next_questions
+
+project:
+  name: My Research Project
+  type: research
+
+limits:
+  memory_lines: 500  # Research tends to accumulate more notes
+  session_length: 10000

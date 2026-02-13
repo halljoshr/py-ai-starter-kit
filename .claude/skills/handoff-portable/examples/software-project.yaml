@@ -1,0 +1,49 @@
+# Example .handoff.yaml for software projects
+# Copy this to your project root and customize
+
+profile: software-project
+
+# Or use explicit config:
+mode: structured
+
+files:
+  state: HANDOFF.md
+  memory: .claude/memory/MEMORY.md
+  logs: docs/sessions/
+
+  # Optional: additional tracking files
+  extra:
+    - DECISIONS.md
+    - BACKLOG.md
+
+sections:
+  state:
+    - last_updated
+    - current_status
+    - next_task
+    - blockers
+    - recent_changes
+
+  memory:
+    - session_log
+    - decisions
+    - open_questions
+    - tech_stack
+
+logs:
+  numbering: sequential
+  pattern: "{number:03d}-{slug}.md"
+  template:
+    - summary
+    - decisions
+    - accomplishments
+    - next_steps
+    - transcript
+
+project:
+  name: My Software Project
+  type: software
+
+limits:
+  memory_lines: 200
+  session_length: 5000

@@ -1,0 +1,24 @@
+# Example .handoff.yaml for documentation projects
+# Optimized for writing, content creation, and iterative editing
+
+profile: documentation
+
+# Or use explicit config:
+mode: minimal
+
+files:
+  logs: writing-sessions/
+
+logs:
+  numbering: date
+  pattern: "{date}.md"
+  template:
+    - summary
+    - content_added
+    - edits_made
+    - next_topics
+    - word_count
+
+project:
+  name: My Documentation Project
+  type: documentation
