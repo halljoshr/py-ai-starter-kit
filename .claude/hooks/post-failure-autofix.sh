@@ -1,5 +1,6 @@
 #!/bin/bash
 # PostToolUseFailure hook for Bash: Feed fix instructions back to Claude
+# Works for pytest, ruff, and mypy failures
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 

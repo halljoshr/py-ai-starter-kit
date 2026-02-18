@@ -4,6 +4,6 @@ INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 
 if echo "$COMMAND" | grep -q 'git commit'; then
-  git log --oneline -1
+  git log --oneline -1 2>/dev/null
 fi
 exit 0
