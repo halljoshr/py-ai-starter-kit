@@ -1,5 +1,15 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "ANTHROPIC_MODEL": "claude-sonnet-4-6",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-4-6",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-4-6",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-4-5-20251001",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
+    "MAX_THINKING_TOKENS": "10000"
+  },
   "permissions": {
     "allow": [
       "Bash(xargs:*)",
@@ -38,28 +48,116 @@
       "Task(Explore)",
       "Task(Plan)"
     ],
-    "ask":[
-      "Bash(aws *)",
-      "Bash(sam *)",
-    ],
     "deny": [
       "Bash(rm -rf *)",
       "Bash(git push --force*)",
       "Bash(git reset --hard*)",
       "Bash(git clean -f*)",
       "Read(~/.aws/**)",
-      "Read(~/.ssh/**)",
-
+      "Read(~/.ssh/**)"
+    ],
+    "ask": [
+      "Bash(aws *)",
+      "Bash(sam *)"
     ]
   },
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
-    "ANTHROPIC_MODEL": "claude-opus-4-6",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-4-6",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-4-5-20250929",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-4-5-20251001",
-    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
-    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32000",
-    "MAX_THINKING_TOKENS": "10000"
-  }
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/post-edit-format.sh",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/post-commit-confirm.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/post-failure-autofix.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/pre-commit-lint.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/session-start-piv.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/notify-permission.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/pre-compact-handoff.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/stop-context-check.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "input=$(cat); cwd=$(echo \"$input\" | jq -r '.cwd'); short_cwd=$(echo \"$cwd\" | sed \"s|^$HOME|~|\"); model_full=$(echo \"$input\" | jq -r '.model.display_name'); model=$(echo \"$model_full\" | sed 's/Claude //'); ctx_size=$(echo \"$input\" | jq -r '.context_window.context_window_size // 200000'); pct=$(echo \"$input\" | jq -r '.context_window.used_percentage // 0'); used_k=$(awk -v p=\"$pct\" -v s=\"$ctx_size\" 'BEGIN { printf \"%.0f\", (p/100*s)/1000 }'); max_k=$(awk -v t=\"$ctx_size\" 'BEGIN { printf \"%.0f\", t/1000 }'); cost=$(echo \"$input\" | jq -r '.cost.total_cost_usd // 0'); cost_fmt=$(awk -v c=\"$cost\" 'BEGIN { printf \"$%.2f\", c }'); added=$(echo \"$input\" | jq -r '.cost.total_lines_added // 0'); removed=$(echo \"$input\" | jq -r '.cost.total_lines_removed // 0'); printf '\\033[36m%s\\033[0m  \\033[33m%s\\033[0m  \\033[35m%sk/%sk\\033[0m  \\033[32m%s\\033[0m  \\033[32m+%s\\033[0m/\\033[31m-%s\\033[0m' \"$short_cwd\" \"$model\" \"$used_k\" \"$max_k\" \"$cost_fmt\" \"$added\" \"$removed\""
+  },
+  "effortLevel": "low"
 }
